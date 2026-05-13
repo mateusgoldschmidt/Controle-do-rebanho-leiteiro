@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vaquinhas v8 - Gestão do Rebanho</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .janela { display: none; }
+        .janela.ativa { display: block; animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .btn-nav-active { background-color: #166534; color: white; border-color: #166534; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+        .btn-filter-active { background-color: #f0fdf4; border-color: #22c55e; color: #166534; font-weight: 900; }
+        .btn-acao-active { background-color: #f3f4f6; border-color: #9ca3af; color: #111827; box-shadow: inset 0 2px 4px 0 rgb(0 0 0 / 0.05); }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-900 pb-12 font-sans selection:bg-green-200">
+
+<header class="bg-green-800 text-white p-4 shadow-lg sticky top-0 z-50">
+    <div class="flex justify-between items-center max-w-md mx-auto">
+        <h1 class="font-black italic text-xl tracking-tighter uppercase">Vaquinhas <span class="text-green-400">v8</span></h1>
+        <button onclick="carregarDados()" class="bg-green-700 w-10 h-10 rounded-full flex items-center justify-center hover:rotate-180 transition-all duration-500 shadow-inner">
+            <i class="fas fa-sync-alt"></i>
+        </button>
+    </div>
+</header>
+
+<nav class="bg-white border-b sticky top-[64px] z-40 shadow-sm">
+    <div class="flex max-w-md mx-auto p-2 gap-2">
+        <button id="btn-nav-inventario" onclick="switchJanela('inventario')" class="btn-nav flex-1 py-3 rounded-xl border-2 border-gray-100 font-bold text-[10px] uppercase transition-all">
+            <i class="fas fa-chart-pie block text-lg mb-1"></i>Rebanho
+        </button>
+        <button id="btn-nav-acoes" onclick="switchJanela('acoes')" class="btn-nav flex-1 py-3 rounded-xl border-2 border-gray-100 font-bold text-[10px] uppercase transition-all">
+            <i class="fas fa-clipboard-list block text-lg mb-1"></i>Ações
+        </button>
+        <button id="btn-nav-lancar" onclick="switchJanela('lancar')" class="btn-nav flex-1 py-3 rounded-xl border-2 border-gray-100 font-bold text-[10px] uppercase transition-all">
+            <i class="fas fa-plus-circle block text-lg mb-1"></i>Lançar
+        </button>
+    </div>
+</nav>
+
+<main class="p-4 max-w-md mx-auto min-h-[80vh]">
+
+    <section id="janela-inventario" class="janela ativa">
+        <div class="flex gap-2 mb-4">
+            <button id="btn-filtro-todos" onclick="renderDashboard('todos')" class="btn-filtro flex-1 py-2.5 border-2 rounded-xl font-bold text-xs uppercase shadow-sm">Todos</button>
+            <button id="btn-filtro-mateus" onclick="renderDashboard('mateus')" class="btn-filtro flex-1 py-2.5 border-2 rounded-xl font-bold text-xs uppercase shadow-sm">Mateus</button>
+            <button id="btn-filtro-alberto" onclick="renderDashboard('alberto')" class="btn-filtro flex-1 py-2.5 border-2 rounded-xl font-bold text-xs uppercase shadow-sm">Alberto</button>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden mb-4">
+            <div class="bg-gray-50 px-4 py-2 border-b text-center">
+                <h3 class="font-black text-[10px] text-gray-500 uppercase italic tracking-widest">Demografia Atual</h3>
+            </div>
+            <table class="w-full text-sm">
+                <thead class="bg-gray-50 text-[10px] text-gray-400 uppercase">
+                    <tr>
+                        <th class="p-2 text-left">Faixa Etária</th>
+                        <th class="p-2 text-center">Fêmeas</th>
+                        <th class="p-2 text-center">Machos</th>
+                    </tr>
+                </thead>
+                <tbody id="lista-demografia" class="divide-y divide-gray-100"></tbody>
+            </table>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="bg-gray-50 px-4 py-2 border-b flex justify-between items-center">
+                <h3 class="font-black text-[10px] text-gray-500 uppercase italic tracking-widest">Status das Vacas</h3>
+                <span id="val-del" class="bg-blue-100 text-blue-700 text-[10px] font-black px-2 py-1 rounded shadow-sm">-- DEL</span>
+            </div>
+            <div class="grid grid-cols-2 gap-px bg-gray-100">
+                <div class="bg-white p-4 text-center border-r border-b">
+                    <span class="text-[9px] uppercase font-black text-gray-400">Lact / Prenhe</span>
+                    <span id="val-lp" class="block text-2xl font-black text-green-600">0</span>
+                </div>
+                <div class="bg-white p-4 text-center border-b">
+                    <span class="text-[9px] uppercase font-black text-gray-400">Lact / Vazia</span>
+                    <span id="val-lv" class="block text-2xl font-black text-orange-500">0</span>
+                </div>
+                <div class="bg-white p-4 text-center border-r">
+                    <span class="text-[9px] uppercase font-black text-gray-400">Seca / Prenhe</span>
+                    <span id="val-sp" class="block text-2xl font-black text-blue-600">0</span>
+                </div>
+                <div class="bg-white p-4 text-center">
+                    <span class="text-[9px] uppercase font-black text-gray-400">Seca / Vazia</span>
+                    <span id="val-sv" class="block text-2xl font-black text-red-500">0</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="janela-acoes" class="janela">
+        <div class="flex gap-2 mb-2">
+            <button id="btn-acao-tipo-todos" class="btn-acao-tipo flex-1 py-2 text-[10px] font-black uppercase tracking-wider rounded-lg border text-gray-400" onclick="setFiltroTipo('todos')">Tudo</button>
+            <button id="btn-acao-tipo-partos" class="btn-acao-tipo flex-1 py-2 text-[10px] font-black uppercase tracking-wider rounded-lg border text-gray-400" onclick="setFiltroTipo('partos')">Partos</button>
+            <button id="btn-acao-tipo-secagem" class="btn-acao-tipo flex-1 py-2 text-[10px] font-black uppercase tracking-wider rounded-lg border text-gray-400" onclick="setFiltroTipo('secagem')">Secagem</button>
+            <button id="btn-acao-tipo-aleitamento" class="btn-acao-tipo flex-1 py-2 text-[10px] font-black uppercase tracking-wider rounded-lg border text-gray-400" onclick="setFiltroTipo('aleitamento')">Aleit.</button>
+        </div>
+        <div class="flex gap-2 mb-5 pb-4 border-b border-gray-200">
+            <button id="btn-acao-tempo-30" class="btn-acao-tempo flex-1 py-2 text-[10px] font-black uppercase tracking-wider rounded-lg border text-gray-400" onclick="setHorizonte(30)">30 Dias</button>
+            <button id="btn-acao-tempo-60" class="btn-acao-tempo flex-1 py-2 text-[10px] font-black uppercase tracking-wider rounded-lg border text-gray-400" onclick="setHorizonte(60)">60 Dias</button>
+            <button id="btn-acao-tempo-null" class="btn-acao-tempo flex-1 py-2 text-[10px] font-black uppercase tracking-wider rounded-lg border text-gray-400" onclick="setHorizonte(null)">Todo o Futuro</button>
+        </div>
+        <div id="lista-acoes"></div>
+    </section>
+
+    <section id="janela-lancar" class="janela">
+        <div id="box-erro-manejo" class="hidden mb-4 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg shadow-sm">
+            <div class="flex items-center text-red-800 font-bold text-sm">
+                <i class="fas fa-exclamation-triangle mr-2 text-red-500"></i>
+                <span id="txt-erro-manejo">Erro</span>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl shadow-lg border-b-4 border-green-700">
+            <h2 class="font-black text-gray-800 mb-6 flex items-center uppercase tracking-tighter">
+                <i class="fas fa-edit text-green-600 mr-2"></i>Manejo ou Correção
+            </h2>
+            
+            <form id="formManejo" onsubmit="salvarManejo(event)" class="space-y-4">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label id="lab-brinco" class="block text-[10px] font-black text-gray-400 uppercase mb-1">Brinco</label>
+                        <input type="text" inputmode="numeric" id="brinco" onblur="formatarBrincoUI(this)" required class="w-full p-3 bg-gray-50 border-2 border-gray-200 rounded-xl font-bold focus:border-green-500 focus:bg-white outline-none transition-colors">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Data do Evento</label>
+                        <input type="date" id="data" required class="w-full p-3 bg-gray-50 border-2 border-gray-200 rounded-xl font-bold focus:border-green-500 focus:bg-white outline-none text-xs transition-colors">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Ação / Ocorrência</label>
+                    <select id="evento" onchange="atualizarCamposForm()" class="w-full p-4 bg-green-50 border-2 border-green-100 rounded-xl font-black text-green-800 focus:border-green-600 focus:bg-white outline-none appearance-none transition-colors">
+                        <option value="Inseminação">Inseminação / Cobertura</option>
+                        <option value="Parto">Parto</option>
+                        <option value="Secagem (Pré-Parto)">Secagem (Pré-Parto)</option>
+                        <option value="Encerramento Reprodutivo">Vazia (Desistência IA)</option>
+                        <option value="Secagem de Descarte">Secagem de Descarte (Secada)</option>
+                        <option value="Nascimento">Nascimento na Quinta</option>
+                        <option value="Compra">Compra de Animal</option>
+                        <option value="Vacina B19">Vacina B19</option>
+                        <option value="Propriedade">Troca de Proprietário</option>
+                        <option value="Saída">Saída (Venda/Morte/Consumo)</option>
+                        <option value="Troca de Brinco">Troca de Brinco (Correção Numérica)</option>
+                    </select>
+                </div>
+
+                <div id="bloco-parto-extra" class="hidden col-span-2 bg-blue-50 p-4 rounded-xl border border-blue-200 mt-2">
+                    <label class="flex items-center space-x-3 text-xs font-black text-blue-900 uppercase cursor-pointer mb-2">
+                        <input type="checkbox" id="check-registrar-cria" onchange="toggleCriaFields()" class="w-5 h-5 text-blue-600 rounded">
+                        <span>Registrar bezerro(a) no plantel?</span>
+                    </label>
+                    <div id="campos-cria" class="hidden grid grid-cols-2 gap-3 pt-3 border-t border-blue-200 mt-2">
+                        <div>
+                            <label class="block text-[10px] font-black text-gray-500 uppercase mb-1">Brinco Sugerido</label>
+                            <input type="text" inputmode="numeric" id="brinco-cria" onblur="formatarBrincoUI(this)" class="w-full p-2 bg-white border border-blue-100 rounded-lg font-bold outline-none focus:border-blue-500 text-blue-800">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black text-gray-500 uppercase mb-1">Proprietário</label>
+                            <select id="proprietario-cria" class="w-full p-2 bg-white border border-blue-100 rounded-lg font-bold outline-none focus:border-blue-500">
+                                <option value="Mateus">Mateus</option>
+                                <option value="Alberto">Alberto</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="cont-d1">
+                    <label id="lab-d1" class="block text-[10px] font-black text-gray-400 uppercase mb-1">Touro / Sêmen</label>
+                    <input type="text" id="info1" class="w-full p-3 bg-gray-50 border-2 border-gray-200 rounded-xl font-bold outline-none focus:border-green-500 focus:bg-white transition-colors">
+                </div>
+                <div id="cont-d2" class="hidden">
+                    <label id="lab-d2" class="block text-[10px] font-black text-gray-400 uppercase mb-1">Info 2</label>
+                    <input type="text" id="info2" class="w-full p-3 bg-gray-50 border-2 border-gray-200 rounded-xl font-bold outline-none focus:border-green-500 focus:bg-white transition-colors">
+                </div>
+                <div id="cont-d3" class="hidden">
+                    <label id="lab-d3" class="block text-[10px] font-black text-gray-400 uppercase mb-1">Info 3</label>
+                    <input type="text" id="info3" class="w-full p-3 bg-gray-50 border-2 border-gray-200 rounded-xl font-bold outline-none focus:border-green-500 focus:bg-white transition-colors">
+                </div>
+
+                <button type="submit" id="btn-salvar" class="w-full bg-green-700 hover:bg-green-800 text-white font-black py-5 rounded-2xl shadow-lg active:transform active:scale-95 transition-all text-xs uppercase tracking-widest mt-4">
+                    <i class="fas fa-paper-plane mr-2"></i>Registrar Manejo
+                </button>
+            </form>
+        </div>
+    </section>
+</main>
+
+<div id="loading" class="hidden fixed inset-0 bg-white/90 z-[100] flex items-center justify-center backdrop-blur-sm">
+    <div class="text-center">
+        <i class="fas fa-cow fa-bounce text-5xl text-green-700 mb-3"></i>
+        <p class="font-black text-xs uppercase tracking-widest text-green-800" id="txt-loading">Sincronizando Rebanho...</p>
+    </div>
+</div>
+
+<script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbxxyvefDRTk6H_LsQj4udhXcpC_VSk-0jRl46GJIwgJP2GHBh6cVZLFrlkCDpI-YZ4Q/exec";
+    let cache = null;
+    let filtroAcoes = { tipo: 'todos', horizonteDias: 60 };
+
+    function switchJanela(id) {
+        document.querySelectorAll('.janela').forEach(j => j.classList.remove('ativa'));
+        document.querySelectorAll('.btn-nav').forEach(b => b.classList.remove('btn-nav-active'));
+        document.getElementById('janela-' + id).classList.add('ativa');
+        document.getElementById('btn-nav-' + id).classList.add('btn-nav-active');
+
+        if (!cache) {
+            carregarDados();
+        } else if (id === 'acoes') {
+            renderAcoes();
+        } else if (id === 'lancar') {
+            document.getElementById('box-erro-manejo').classList.add('hidden');
+            atualizarCamposForm(); 
+        }
+    }
+
+    async function carregarDados() {
+        document.getElementById('loading').classList.remove('hidden');
+        document.getElementById('txt-loading').innerText = "Sincronizando Rebanho...";
+
+        try {
+            const r = await fetch(API_URL + "?action=relatorioAcoes", { redirect: "follow" });
+            const json = await r.json();
+
+            if (json.error) throw new Error(json.error);
+            if (json.status === 'erro') throw new Error(json.msg);
+
+            cache = json;
+            renderDashboard('todos'); 
+            setFiltroTipo('todos'); 
+            setHorizonte(60); 
+            atualizarCamposForm(); 
+        } catch (e) {
+            alert("Falha ao comunicar com o servidor.\n\nDetalhe: " + e.message + "\n\nVerifique se o Motor de Regras foi atualizado (Nova Versão) no Apps Script.");
+        } finally {
+            document.getElementById('loading').classList.add('hidden');
+        }
+    }
+
+    function formatarBrincoUI_internal(val) {
+        let n = String(val).replace(/\D/g, '');
+        return n ? n.padStart(6, '0') : '';
+    }
+
+    function formatarBrincoUI(input) {
+        input.value = formatarBrincoUI_internal(input.value);
+    }
+
+    function toggleCriaFields() {
+        const isChecked = document.getElementById('check-registrar-cria').checked;
+        const campos = document.getElementById('campos-cria');
+        const inBrincoCria = document.getElementById('brinco-cria');
+        
+        if (isChecked) {
+            campos.classList.remove('hidden');
+            if (cache && cache.dadosFormulario) {
+                inBrincoCria.value = cache.dadosFormulario.proximoBrinco;
+            }
+        } else {
+            campos.classList.add('hidden');
+            inBrincoCria.value = "";
+        }
+    }
+
+    function mostrarErroValidacao(msg) {
+        document.getElementById('txt-erro-manejo').innerText = msg;
+        document.getElementById('box-erro-manejo').classList.remove('hidden');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function getAnimalFromCache(brinco) {
+        if (!cache || !cache.animais) return null;
+        return cache.animais[brinco] || null;
+    }
+
+    function getMillis(valor) {
+        if (!valor) return null;
+        if (typeof valor === 'number') return valor;
+        const d = new Date(valor);
+        return isNaN(d.getTime()) ? null : d.getTime();
+    }
+
+    async function salvarManejo(e) {
+        e.preventDefault();
+        document.getElementById('box-erro-manejo').classList.add('hidden');
+        
+        const ev = document.getElementById('evento').value;
+        const mainDataStr = document.getElementById('data').value;
+        const info1 = document.getElementById('info1').value.trim();
+        const info2 = document.getElementById('info2').value.trim();
+        const info3 = document.getElementById('info3').value.trim();
+        
+        let mainBrincoRaw = document.getElementById('brinco').value;
+        let mainBrinco = formatarBrincoUI_internal(mainBrincoRaw);
+
+        // Data obrigatória
+        if (!mainDataStr) {
+            return mostrarErroValidacao("Informe a data do evento.");
+        }
+
+        const dataEvento = new Date(mainDataStr + "T00:00:00");
+        const dataHoje = new Date();
+        dataHoje.setHours(0,0,0,0);
+
+        if (dataEvento > dataHoje) {
+            return mostrarErroValidacao("A data não pode estar no futuro.");
+        }
+        
+        // Auto-brinco se vier vazio para Nascimento/Compra
+        if (!mainBrinco && (ev === "Nascimento" || ev === "Compra") && cache && cache.dadosFormulario) {
+            mainBrinco = cache.dadosFormulario.proximoBrinco;
+        }
+
+        const animal = getAnimalFromCache(mainBrinco);
+
+        // ======================================================
+        //  GRANDE MOTOR DE VALIDAÇÃO (PRÉ-VÔO DO LOTE)
+        // ======================================================
+
+        // 1) Regras básicas de existência
+        if (!animal && ev !== "Nascimento" && ev !== "Compra" && ev !== "Troca de Brinco") {
+            return mostrarErroValidacao(`O animal ${mainBrinco} não foi encontrado. Registre o Nascimento ou Compra primeiro.`);
+        }
+
+        if (animal) {
+            const nascMillis = getMillis(animal.nascimento);
+
+            // Animal descartado
+            if (animal.descartada && ev !== "Saída" && ev !== "Troca de Brinco") {
+                return mostrarErroValidacao(`O animal ${mainBrinco} já foi baixado do plantel (Saída registrada).`);
+            }
+            if (animal.descartada && ev === "Saída") {
+                return mostrarErroValidacao(`O animal ${mainBrinco} já possui uma Saída registrada.`);
+            }
+
+            // Data anterior ao nascimento
+            if (nascMillis && dataEvento.getTime() < nascMillis) {
+                return mostrarErroValidacao(
+                    `A data é anterior ao nascimento do animal (${new Date(nascMillis).toLocaleDateString('pt-BR')}).`
+                );
+            }
+
+            // Eventos só para fêmeas
+            const eventosFemea = [
+                "Inseminação",
+                "Parto",
+                "Secagem (Pré-Parto)",
+                "Encerramento Reprodutivo",
+                "Secagem de Descarte",
+                "Vacina B19"
+            ];
+            if (eventosFemea.includes(ev) && animal.sexo !== "F") {
+                return mostrarErroValidacao(`O evento '${ev}' é exclusivo para fêmeas.`);
+            }
+
+            // 2) Regras por evento
+
+            // INSEMINAÇÃO
+            if (ev === "Inseminação") {
+                if (animal.statusRep === "Prenhe") {
+                    return mostrarErroValidacao("Não é possível inseminar: a fêmea já está marcada como prenhe.");
+                }
+                if (animal.encerrada) {
+                    return mostrarErroValidacao("Não é possível inseminar: reprodução encerrada para esta fêmea.");
+                }
+                // Opcional: se tiver DEL e idade no cache, podem ser usados aqui.
+            }
+
+            // PARTO
+            if (ev === "Parto") {
+                const dtUltIA = getMillis(animal.dtUltimaIA);
+                if (!dtUltIA) {
+                    return mostrarErroValidacao("Parto bloqueado: não há registro prévio de Inseminação para esta fêmea.");
+                }
+                const diasGest = Math.floor((dataEvento.getTime() - dtUltIA) / (1000 * 60 * 60 * 24));
+                if (diasGest < 250 || diasGest > 320) {
+                    return mostrarErroValidacao(
+                        `Intervalo IA→Parto inconsistente (${diasGest} dias). Verifique se a data do parto está correta.`
+                    );
+                }
+            }
+
+            // SECAGEM (PRÉ-PARTO)
+            if (ev === "Secagem (Pré-Parto)") {
+                if (animal.statusProd !== "Lactando") {
+                    return mostrarErroValidacao("Secagem Pré-Parto exige que a vaca esteja em lactação.");
+                }
+                if (animal.statusRep !== "Prenhe" && animal.statusRep !== "Pendente") {
+                    return mostrarErroValidacao("Secagem Pré-Parto exige que a fêmea esteja prenhe (ou IA pendente).");
+                }
+            }
+
+            // SECAGEM DE DESCARTE
+            if (ev === "Secagem de Descarte") {
+                if (animal.statusProd === "Seca") {
+                    return mostrarErroValidacao("Esta vaca já está seca. Não é possível registrar nova secagem de descarte.");
+                }
+            }
+
+            // ENCERRAMENTO REPRODUTIVO
+            if (ev === "Encerramento Reprodutivo") {
+                if (animal.statusRep !== "Pendente") {
+                    return mostrarErroValidacao("A fêmea não possui Inseminação pendente para desistir.");
+                }
+            }
+
+            // VACINA B19
+            if (ev === "Vacina B19") {
+                if (animal.vacinaB19) {
+                    return mostrarErroValidacao("Esta fêmea já possui a vacina B19 registrada.");
+                }
+                if (nascMillis) {
+                    const idadeDias = Math.floor((dataEvento.getTime() - nascMillis) / (1000 * 60 * 60 * 24));
+                    if (idadeDias < 90 || idadeDias > 240) {
+                        return mostrarErroValidacao(
+                            `Vacina B19 recomendada entre 3 e 8 meses (90–240 dias). Idade atual: ${idadeDias} dias.`
+                        );
+                    }
+                }
+            }
+
+            // TROCA DE PROPRIETÁRIO
+            if (ev === "Propriedade") {
+                if (!info1) {
+                    return mostrarErroValidacao("Informe o novo proprietário.");
+                }
+                if (animal.proprietario && animal.proprietario.toLowerCase() === info1.toLowerCase()) {
+                    return mostrarErroValidacao("O animal já está registrado com este proprietário.");
+                }
+            }
+
+            // SAÍDA
+            if (ev === "Saída") {
+                if (!info1) {
+                    return mostrarErroValidacao("Informe o motivo da Saída (Venda/Morte/Consumo).");
+                }
+                if (animal.statusRep === "Prenhe" || animal.statusRep === "Pendente") {
+                    return mostrarErroValidacao(
+                        "Saída bloqueada: a fêmea está prenhe ou com IA pendente. Atualize o status reprodutivo antes da saída."
+                    );
+                }
+            }
+        }
+
+        // 3) Regras específicas para eventos que criam novo animal (Nascimento / Compra)
+        if (ev === "Nascimento") {
+            const brincoMae = formatarBrincoUI_internal(info2);
+            const mae = brincoMae ? getAnimalFromCache(brincoMae) : null;
+
+            if (!mae) {
+                return mostrarErroValidacao("Informe um brinco de mãe existente para o Nascimento.");
+            }
+            if (mae.sexo !== "F") {
+                return mostrarErroValidacao("A mãe informada no Nascimento deve ser fêmea.");
+            }
+            if (mae.descartada) {
+                return mostrarErroValidacao("A mãe informada já está baixada do plantel.");
+            }
+
+            const nascAtual = getAnimalFromCache(mainBrinco);
+            if (nascAtual && !nascAtual.descartada) {
+                return mostrarErroValidacao(
+                    `O brinco ${mainBrinco} já está em uso por outro animal ativo. Use outro número para a cria.`
+                );
+            }
+        }
+
+        if (ev === "Compra") {
+            const jaExiste = getAnimalFromCache(mainBrinco);
+            if (jaExiste && !jaExiste.descartada) {
+                return mostrarErroValidacao(
+                    `O brinco ${mainBrinco} já está em uso por um animal ativo. Use outro brinco para a Compra.`
+                );
+            }
+            if (!info1) {
+                return mostrarErroValidacao("Informe o sexo do animal comprado (F/M).");
+            }
+            if (!info3) {
+                return mostrarErroValidacao("Informe o proprietário inicial na Compra.");
+            }
+        }
+
+        // 4) Regra da Cria (Parto com registro de bezerro)
+        if (ev === "Parto" && document.getElementById('check-registrar-cria').checked) {
+            const bCria = formatarBrincoUI_internal(document.getElementById('brinco-cria').value || "");
+            if (bCria) {
+                const criaExistente = getAnimalFromCache(bCria);
+                if (criaExistente && !criaExistente.descartada) {
+                    return mostrarErroValidacao(
+                        `O brinco sugerido para a cria (${bCria}) já está em uso por um animal ativo.`
+                    );
+                }
+            }
+        }
+
+        // 5) Troca de Brinco: garantir que novo número não esteja em uso
+        if (ev === "Troca de Brinco") {
+            const brincoAntigo = mainBrinco;
+            const novoBrinco = formatarBrincoUI_internal(info1);
+            if (!novoBrinco) {
+                return mostrarErroValidacao("Informe o novo número do brinco.");
+            }
+            const animalAntigo = getAnimalFromCache(brincoAntigo);
+            if (!animalAntigo) {
+                return mostrarErroValidacao(`Brinco antigo ${brincoAntigo} não encontrado na base.`);
+            }
+            const animalNovo = getAnimalFromCache(novoBrinco);
+            if (animalNovo && !animalNovo.descartada) {
+                return mostrarErroValidacao(
+                    `O novo brinco (${novoBrinco}) já está em uso por um animal ativo.`
+                );
+            }
+        }
+
+        // ======================================================
+        //               FIM DAS VALIDAÇÕES
+        // ======================================================
+
+        const btn = document.getElementById('btn-salvar');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processando Lote...';
+        document.getElementById('loading').classList.remove('hidden');
+        document.getElementById('txt-loading').innerText = "Gravando na Planilha...";
+
+        let eventosEnvio = []; 
+
+        if (ev === "Parto") {
+            const registrar = document.getElementById('check-registrar-cria').checked;
+
+            eventosEnvio.push({
+                brinco: mainBrinco,
+                data: mainDataStr,
+                evento: "Parto",
+                info1: info1,
+                info2: "",
+                info3: ""
+            });
+
+            if (registrar) {
+                let bCriaRaw = document.getElementById('brinco-cria').value;
+                if (!bCriaRaw && cache && cache.dadosFormulario) {
+                    bCriaRaw = cache.dadosFormulario.proximoBrinco;
+                }
+                let brincoFinalCria = formatarBrincoUI_internal(bCriaRaw);
+                
+                const dono = document.getElementById('proprietario-cria').value;
+                let paiId = "";
+                if (cache && cache.dadosFormulario && cache.dadosFormulario.historicoIAs) {
+                    paiId = cache.dadosFormulario.historicoIAs[mainBrinco] || "";
+                }
+                
+                eventosEnvio.push({
+                    brinco: brincoFinalCria,
+                    data: mainDataStr,
+                    evento: "Nascimento",
+                    info1: info1,
+                    info2: mainBrinco,
+                    info3: paiId
+                });
+                eventosEnvio.push({
+                    brinco: brincoFinalCria,
+                    data: mainDataStr,
+                    evento: "Propriedade",
+                    info1: dono
+                });
+            }
+        } else {
+            eventosEnvio.push({
+                brinco: mainBrinco,
+                data: mainDataStr,
+                evento: ev,
+                info1: info1,
+                info2: info2,
+                info3: info3
+            });
+        }
+
+        try {
+            const res = await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(eventosEnvio)
+            });
+            const result = await res.json();
+
+            if (result.status === 'sucesso') {
+                alert(result.msg);
+                document.getElementById('formManejo').reset();
+                document.getElementById('data').valueAsDate = new Date();
+                document.getElementById('check-registrar-cria').checked = false;
+                toggleCriaFields();
+                atualizarCamposForm();
+                cache = null; 
+                carregarDados();
+            } else {
+                throw new Error(result.msg);
+            }
+        } catch (err) { 
+            mostrarErroValidacao("Falha na gravação: " + err.message); 
+            document.getElementById('loading').classList.add('hidden');
+        } finally { 
+            btn.disabled = false; 
+            btn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Registrar Manejo'; 
+        }
+    }
+
+    function getDashboardOwner(dono) {
+        const db = cache.dashboard;
+        if (dono !== 'todos') return db.proprietarios[dono] || { femeas: {}, machos: {} };
+        const total = {
+            femeas: { ate_1: 0, de_1_a_2: 0, de_2_a_3: 0, mais_de_3: 0 },
+            machos: { ate_1: 0, de_1_a_2: 0, de_2_a_3: 0, mais_de_3: 0 }
+        };
+        for (const donoKey in db.proprietarios) {
+            const p = db.proprietarios[donoKey];
+            for (const faixa in total.femeas) {
+                total.femeas[faixa] += p.femeas[faixa] || 0;
+                total.machos[faixa] += p.machos[faixa] || 0;
+            }
+        }
+        return total;
+    }
+
+    function renderDashboard(dono) {
+        if (!cache || !cache.dashboard) return;
+        document.querySelectorAll('.btn-filtro').forEach(b => b.classList.remove('btn-filter-active'));
+        document.getElementById('btn-filtro-' + dono).classList.add('btn-filter-active');
+
+        const db = cache.dashboard;
+        const p = getDashboardOwner(dono);
+        const labels = {
+            ate_1: "Até 1 ano",
+            de_1_a_2: "1 a 2 anos",
+            de_2_a_3: "2 a 3 anos",
+            mais_de_3: "Mais de 3 anos"
+        };
+
+        let html = "";
+        for (let k in labels) {
+            html += `
+                <tr class="hover:bg-gray-50">
+                    <td class="p-3 font-medium text-xs text-gray-600">${labels[k]}</td>
+                    <td class="p-3 text-center font-black text-green-700">${p.femeas[k] || 0}</td>
+                    <td class="p-3 text-center font-black text-blue-700">${p.machos[k] || 0}</td>
+                </tr>`;
+        }
+        document.getElementById('lista-demografia').innerHTML = html;
+
+        document.getElementById('val-lp').innerText = db.matriz.lactandoPrenhe || 0;
+        document.getElementById('val-lv').innerText = db.matriz.lactandoVazia || 0;
+        document.getElementById('val-sp').innerText = db.matriz.secaPrenhe || 0;
+        document.getElementById('val-sv').innerText = db.matriz.secaVazia || 0;
+        document.getElementById('val-del').innerText =
+            (db.totalLactando > 0 ? Math.round(db.somaDEL / db.totalLactando) : 0) + " DEL Médio";
+    }
+
+    function setFiltroTipo(tipo) {
+        filtroAcoes.tipo = tipo;
+        document.querySelectorAll('.btn-acao-tipo').forEach(b => {
+            b.classList.remove('btn-acao-active', 'text-gray-900');
+            b.classList.add('text-gray-400');
+        });
+        const btn = document.getElementById('btn-acao-tipo-' + tipo);
+        if (btn) {
+            btn.classList.add('btn-acao-active', 'text-gray-900');
+            btn.classList.remove('text-gray-400');
+        }
+        renderAcoes();
+    }
+
+    function setHorizonte(dias) {
+        filtroAcoes.horizonteDias = dias;
+        document.querySelectorAll('.btn-acao-tempo').forEach(b => {
+            b.classList.remove('btn-acao-active', 'text-gray-900');
+            b.classList.add('text-gray-400');
+        });
+        const btnId = dias === null ? 'null' : dias;
+        const btn = document.getElementById('btn-acao-tempo-' + btnId);
+        if (btn) {
+            btn.classList.add('btn-acao-active', 'text-gray-900');
+            btn.classList.remove('text-gray-400');
+        }
+        renderAcoes();
+    }
+
+    function filtrarPorHorizonte(lista, campoData) {
+        if (!filtroAcoes.horizonteDias) return lista;
+        const hoje = new Date();
+        hoje.setHours(0,0,0,0);
+        const limite = new Date(hoje);
+        limite.setDate(limite.getDate() + filtroAcoes.horizonteDias);
+        return lista.filter(item => {
+            const d = new Date(item[campoData]);
+            return d >= hoje && d <= limite;
+        });
+    }
+
+    function renderAcoes() {
+        const list = document.getElementById('lista-acoes');
+        if (!cache) return;
+
+        try {
+            let h = '';
+            const card = (title, icon, colorClass, content) => `
+                <div class="mb-6 bg-white rounded-2xl shadow-sm border-t-4 ${colorClass} overflow-hidden">
+                    <div class="bg-gray-50 px-4 py-3 border-b flex items-center justify-between">
+                        <h4 class="font-black text-[10px] uppercase tracking-widest text-gray-500">
+                            <i class="${icon} mr-2"></i>${title}
+                        </h4>
+                    </div>
+                    <div class="divide-y divide-gray-100">${content}</div>
+                </div>`;
+
+            const vacinaB19   = filtrarPorHorizonte(cache.vacinaB19   || [], 'limite');
+            const aleitamento = filtrarPorHorizonte(cache.aleitamento || [], 'fim');
+            const partos      = filtrarPorHorizonte(cache.partos      || [], 'data');
+            const secagem     = filtrarPorHorizonte(cache.secagem     || [], 'data');
+            const vacasAptas  = cache.vacasAptas   || [];
+            const novilhasAptas = cache.novilhasAptas || [];
+            
+            if (filtroAcoes.tipo === 'todos' || filtroAcoes.tipo === 'vacinaB19') {
+                if (vacinaB19.length > 0) {
+                    let b19Html = vacinaB19.map(v => `
+                        <div class="p-3 flex justify-between items-center hover:bg-gray-50 transition">
+                            <span class="font-bold text-lg text-gray-900">${v.brinco}</span>
+                            <span class="text-xs font-black text-purple-700 bg-purple-50 px-2 py-1 rounded border border-purple-100">
+                                LIMITE: ${new Date(v.limite).toLocaleDateString('pt-BR')}
+                            </span>
+                        </div>`).join('');
+                    h += card('Vacinas Brucelose (B19)', 'fas fa-syringe text-purple-600', 'border-purple-600', b19Html);
+                }
+            }
+
+            if (filtroAcoes.tipo === 'todos' || filtroAcoes.tipo === 'aleitamento') {
+                let leiHtml = aleitamento.map(a => `
+                    <div class="p-3 flex justify-between items-center hover:bg-gray-50 transition">
+                        <div>
+                            <b class="text-lg text-gray-900">${a.brinco}</b><br>
+                            <small class="text-gray-400 font-bold uppercase text-[9px]">
+                                Desmame: ${new Date(a.fim).toLocaleDateString('pt-BR')}
+                            </small>
+                        </div>
+                        <div class="text-pink-600 font-black px-4 py-1.5 bg-pink-50 rounded-full border border-pink-100 text-xs">
+                            ${a.dieta}
+                        </div>
+                    </div>`).join('') || 
+                    '<p class="p-4 text-center text-gray-400 text-xs italic">Sem animais no leite.</p>';
+                h += card('Dieta de Aleitamento', 'fas fa-bottle-water text-pink-600', 'border-pink-600', leiHtml);
+            }
+
+            if (filtroAcoes.tipo === 'todos' || filtroAcoes.tipo === 'partos') {
+                let partosHtml = partos.map(p => `
+                    <div class="p-3 flex justify-between items-center hover:bg-gray-50 transition">
+                        <div>
+                            <span class="font-bold text-lg text-gray-900">${p.brinco}</span>
+                            <span class="text-[9px] bg-gray-200 px-2 py-0.5 rounded font-black uppercase ml-1">${p.cat}</span>
+                            ${p.atb ? `<span class="text-[9px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded font-black ml-1 uppercase">ATB: ${p.atb}</span>` : ''}
+                        </div>
+                        <div class="text-red-600 font-black text-sm">
+                            <i class="far fa-calendar-alt mr-1"></i>
+                            ${new Date(p.data).toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'})}
+                        </div>
+                    </div>`).join('') ||
+                    '<p class="p-4 text-center text-gray-400 text-xs italic">Nenhum evento neste horizonte.</p>';
+                h += card('Previsão de Partos', 'fas fa-baby-carriage text-red-600', 'border-red-600', partosHtml);
+            }
+
+            if (filtroAcoes.tipo === 'todos' || filtroAcoes.tipo === 'secagem') {
+                let secasHtml = secagem.map(s => `
+                    <div class="p-3 flex justify-between items-center hover:bg-gray-50 transition">
+                        <span class="font-bold text-lg text-gray-900">${s.brinco}</span>
+                        <div class="text-orange-600 font-black text-sm">
+                            <i class="far fa-calendar-alt mr-1"></i>
+                            ${new Date(s.data).toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'})}
+                        </div>
+                    </div>`).join('') ||
+                    '<p class="p-4 text-center text-gray-400 text-xs italic">Nenhum evento neste horizonte.</p>';
+                h += card('Previsão de Secagem', 'fas fa-leaf text-orange-600', 'border-orange-500', secasHtml);
+            }
+
+            if (filtroAcoes.tipo === 'todos') {
+                let vAptasHtml = vacasAptas.map(v => `
+                    <div class="p-3 flex justify-between items-center hover:bg-gray-50 transition">
+                        <div>
+                            <span class="font-bold text-lg text-gray-900">${v.brinco}</span>
+                            <div class="text-[9px] text-gray-500 font-bold uppercase mt-0.5">
+                                Lact: <b>${v.lact}</b> &bull; DEL: <b>${v.del}d</b>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-[10px] px-2 py-1 rounded font-black uppercase ${
+                                v.tent > 2 ? 'bg-red-100 text-red-700' : 'bg-blue-50 text-blue-600'
+                            }">
+                                ${v.tent}ª Tentativa
+                            </span>
+                        </div>
+                    </div>`).join('') ||
+                    '<p class="p-4 text-center text-gray-400 text-xs italic">Sem vacas aptas no momento.</p>';
+                h += card('Vacas Aptas (IA)', 'fas fa-venus-mars text-blue-600', 'border-blue-600', vAptasHtml);
+
+                let nAptasHtml = novilhasAptas.map(n => `
+                    <div class="p-3 flex justify-between items-center hover:bg-gray-50 transition">
+                        <span class="font-bold text-lg text-gray-900">${n.brinco}</span>
+                        <span class="text-[10px] font-black text-teal-700 bg-teal-50 px-2 py-1 rounded border border-teal-100 uppercase">
+                            ${n.idade}
+                        </span>
+                    </div>`).join('') ||
+                    '<p class="p-4 text-center text-gray-400 text-xs italic">Nenhuma novilha atingiu a idade.</p>';
+                h += card('Novilhas Aptas (IA)', 'fas fa-venus text-teal-600', 'border-teal-600', nAptasHtml);
+            }
+
+            list.innerHTML = h;
+        } catch (err) {
+            list.innerHTML = `<div class="p-4 bg-red-100 text-red-700 font-bold text-center">
+                                Erro no Visual: ${err.message}
+                              </div>`;
+        }
+    }
+
+    function atualizarCamposForm() {
+        document.getElementById('box-erro-manejo').classList.add('hidden');
+        const ev = document.getElementById('evento').value;
+        const d1 = document.getElementById('cont-d1'), l1 = document.getElementById('lab-d1');
+        const d2 = document.getElementById('cont-d2'), l2 = document.getElementById('lab-d2');
+        const d3 = document.getElementById('cont-d3'), l3 = document.getElementById('lab-d3');
+        const lBrinco = document.getElementById('lab-brinco');
+        const fPartoExtra = document.getElementById('bloco-parto-extra');
+        const inInfo1 = document.getElementById('info1');
+        const inBrinco = document.getElementById('brinco');
+
+        [d1, d2, d3, fPartoExtra].forEach(c => c.classList.add('hidden'));
+        lBrinco.innerText = "Brinco Principal";
+        
+        inInfo1.removeAttribute("onblur");
+        inInfo1.removeAttribute("inputmode");
+        inInfo1.value = ""; 
+        document.getElementById('info2').value = ""; 
+        document.getElementById('info3').value = "";
+        
+        document.getElementById('check-registrar-cria').checked = false;
+        toggleCriaFields();
+
+        switch(ev) {
+            case "Nascimento": 
+                configField(l1, d1, "Sexo (F/M)");
+                configField(l2, d2, "Brinco da Mãe");
+                configField(l3, d3, "Nome do Pai"); 
+                if (cache && cache.dadosFormulario) {
+                    inBrinco.value = cache.dadosFormulario.proximoBrinco;
+                }
+                break;
+            case "Compra": 
+                configField(l1, d1, "Sexo (F/M)");
+                configField(l3, d3, "Proprietário Inicial"); 
+                if (cache && cache.dadosFormulario) {
+                    inBrinco.value = cache.dadosFormulario.proximoBrinco;
+                }
+                break;
+            case "Propriedade":
+                configField(l1, d1, "Novo Proprietário");
+                break;
+            case "Inseminação": 
+                configField(l1, d1, "Touro / Sêmen"); 
+                if (cache && cache.dadosFormulario && cache.dadosFormulario.machoMaisVelho) {
+                    inInfo1.value = cache.dadosFormulario.machoMaisVelho;
+                }
+                break;
+            case "Secagem (Pré-Parto)":
+            case "Secagem de Descarte":
+                configField(l1, d1, "Antibiótico Usado");
+                break;
+            case "Parto": 
+                configField(l1, d1, "Sexo da Cria (F/M)"); 
+                fPartoExtra.classList.remove('hidden'); 
+                break;
+            case "Saída":
+                configField(l1, d1, "Motivo (Venda/Morte/Consumo)");
+                break;
+            case "Troca de Brinco": 
+                lBrinco.innerText = "Brinco Antigo";
+                configField(l1, d1, "Novo Número do Brinco"); 
+                inInfo1.setAttribute("onblur", "formatarBrincoUI(this)");
+                inInfo1.setAttribute("inputmode", "numeric");
+                break;
+        }
+    }
+
+    function configField(lab, cont, text) {
+        lab.innerText = text;
+        cont.classList.remove('hidden');
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('data').valueAsDate = new Date();
+        switchJanela('inventario');
+    });
+</script>
+</body>
+</html>
