@@ -2,8 +2,17 @@
 <html lang="pt-PT">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Vaquinhas v8 - Gestão do Rebanho</title>
+    
+    <link rel="manifest" href='data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22Gest%C3%A3o%20Vaquinhas%22%2C%22short_name%22%3A%22Vaquinhas%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23f3f4f6%22%2C%22theme_color%22%3A%22%23166534%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22https%3A%2F%2Fcdn-icons-png.flaticon.com%2F512%2F1998%2F1998655.png%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fpng%22%7D%5D%7D'>
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Vaquinhas">
+    <meta name="theme-color" content="#166534">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/1998/1998655.png">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -195,7 +204,7 @@
                     <div id="bloco-foto" class="hidden col-span-2 bg-purple-50 p-4 rounded-xl border border-purple-200 mt-2 text-center">
                         <label class="block w-full py-3 bg-purple-600 hover:bg-purple-700 text-white font-black rounded-lg cursor-pointer transition-colors shadow-sm text-sm uppercase tracking-widest">
                             <i class="fas fa-camera mr-2"></i>Tirar Foto ou Escolher
-                            <input type="file" id="input-foto" accept="image/*" class="hidden" onchange="previewFoto(this)">
+                            <input type="file" id="input-foto" accept="image/*" capture="environment" class="hidden" onchange="previewFoto(this)">
                         </label>
                         <div id="preview-foto-container">
                             <img id="preview-foto" src="" alt="Pré-visualização">
