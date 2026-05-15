@@ -18,6 +18,9 @@
         .btn-filter-active { background-color: #f0fdf4; border-color: #22c55e; color: #166534; font-weight: 900; }
         .btn-acao-active { background-color: #f3f4f6; border-color: #9ca3af; color: #111827; box-shadow: inset 0 2px 4px 0 rgb(0 0 0 / 0.05); }
         .btn-prod-active { background-color: #2563eb; border-color: #1d4ed8; color: white; }
+        .foto-perfil { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        #preview-foto-container { display: none; margin-top: 10px; text-align: center; }
+        #preview-foto { max-width: 100%; max-height: 200px; border-radius: 12px; border: 2px dashed #cbd5e1; margin: 0 auto; object-fit: contain; }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-900 pb-16 font-sans selection:bg-green-200">
@@ -27,12 +30,9 @@
         <i class="fas fa-shield-alt text-5xl text-green-600 mb-4 block"></i>
         <h2 class="font-black text-2xl uppercase tracking-tighter text-gray-800 mb-1">Vaquinhas v8</h2>
         <p class="text-xs font-bold text-gray-400 mb-6 uppercase tracking-widest">Acesso Restrito</p>
-        
         <form onsubmit="efetuarLogin(event)" class="space-y-4">
             <input type="password" id="input-senha" placeholder="Digite a Senha" required class="w-full p-4 border-2 border-gray-200 rounded-xl font-bold text-center text-xl focus:border-green-600 outline-none transition-colors">
-            <button type="submit" id="btn-login" class="w-full bg-green-700 hover:bg-green-800 text-white font-black py-4 rounded-xl shadow-lg active:scale-95 transition-all uppercase tracking-widest text-sm">
-                Entrar no Sistema
-            </button>
+            <button type="submit" id="btn-login" class="w-full bg-green-700 hover:bg-green-800 text-white font-black py-4 rounded-xl shadow-lg active:scale-95 transition-all uppercase tracking-widest text-sm">Entrar no Sistema</button>
         </form>
     </div>
 </div>
@@ -75,10 +75,7 @@
                 </table>
             </div>
             <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-                <div class="bg-gray-50 px-4 py-2 border-b flex justify-between items-center">
-                    <h3 class="font-black text-[10px] text-gray-500 uppercase italic tracking-widest">Status das Vacas</h3>
-                    <span id="val-del" class="bg-blue-100 text-blue-700 text-[10px] font-black px-2 py-1 rounded shadow-sm">-- DEL</span>
-                </div>
+                <div class="bg-gray-50 px-4 py-2 border-b flex justify-between items-center"><h3 class="font-black text-[10px] text-gray-500 uppercase italic tracking-widest">Status das Vacas</h3><span id="val-del" class="bg-blue-100 text-blue-700 text-[10px] font-black px-2 py-1 rounded shadow-sm">-- DEL</span></div>
                 <div class="grid grid-cols-2 gap-px bg-gray-100">
                     <div class="bg-white p-4 text-center border-r border-b"><span class="text-[9px] uppercase font-black text-gray-400">Lact / Prenhe</span><span id="val-lp" class="block text-2xl font-black text-green-600">0</span></div>
                     <div class="bg-white p-4 text-center border-b"><span class="text-[9px] uppercase font-black text-gray-400">Lact / Vazia</span><span id="val-lv" class="block text-2xl font-black text-orange-500">0</span></div>
@@ -111,7 +108,6 @@
                         </select>
                     </div>
                 </div>
-                
                 <div class="flex gap-1 mt-3 pt-3 border-t border-gray-100">
                     <button id="btn-view-tudo" onclick="setViewProd('tudo')" class="btn-view-prod flex-1 py-1.5 text-[9px] font-black uppercase rounded bg-gray-800 text-white">Tudo</button>
                     <button id="btn-view-vol" onclick="setViewProd('vol')" class="btn-view-prod flex-1 py-1.5 text-[9px] font-black uppercase rounded bg-gray-200 text-gray-600">Vol & Preço</button>
@@ -120,61 +116,25 @@
             </div>
 
             <div id="container-graficos-diarios" class="space-y-4">
-                <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 view-vol">
-                    <h3 class="font-black text-[10px] text-gray-500 uppercase tracking-widest mb-2"><i class="fas fa-calendar-day mr-1 text-blue-500"></i> Produção Diária (L)</h3>
-                    <canvas id="chartProdDiaria" height="200"></canvas>
-                </div>
-                <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 view-vol">
-                    <h3 class="font-black text-[10px] text-gray-500 uppercase tracking-widest mb-2"><i class="fas fa-tachometer-alt mr-1 text-green-500"></i> Produtividade Diária (L/Vaca)</h3>
-                    <p class="text-[9px] text-gray-400 italic mb-2">*Ajustado automaticamente para coletas dia sim/dia não.</p>
-                    <canvas id="chartLvacaDiaria" height="150"></canvas>
-                </div>
-                
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 view-vol"><h3 class="font-black text-[10px] text-gray-500 uppercase tracking-widest mb-2"><i class="fas fa-calendar-day mr-1 text-blue-500"></i> Produção Diária (L)</h3><canvas id="chartProdDiaria" height="200"></canvas></div>
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 view-vol"><h3 class="font-black text-[10px] text-gray-500 uppercase tracking-widest mb-2"><i class="fas fa-tachometer-alt mr-1 text-green-500"></i> Produtividade (L/Vaca)</h3><p class="text-[9px] text-gray-400 italic mb-2">*Ajustado para coletas intercaladas.</p><canvas id="chartLvacaDiaria" height="150"></canvas></div>
                 <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 view-qual">
-                    <h3 class="font-black text-[10px] text-gray-500 uppercase tracking-widest mb-3"><i class="fas fa-table mr-1 text-purple-500"></i> Análises de Qualidade no Mês</h3>
+                    <h3 class="font-black text-[10px] text-gray-500 uppercase tracking-widest mb-3"><i class="fas fa-table mr-1 text-purple-500"></i> Análises de Qualidade</h3>
                     <div class="overflow-x-auto rounded-xl border border-gray-100">
                         <table class="w-full text-xs text-left whitespace-nowrap">
-                            <thead class="bg-gray-50 text-[9px] uppercase text-gray-500">
-                                <tr>
-                                    <th class="p-2 border-b">Data</th>
-                                    <th class="p-2 border-b text-yellow-600">Gord.</th>
-                                    <th class="p-2 border-b text-pink-600">Prot.</th>
-                                    <th class="p-2 border-b text-cyan-600">Lact.</th>
-                                    <th class="p-2 border-b text-red-600">CCS</th>
-                                    <th class="p-2 border-b text-purple-600">CTB</th>
-                                    <th class="p-2 border-b text-gray-500">NUL</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tbody-qualidade-diaria" class="divide-y divide-gray-100 font-medium text-gray-600">
-                            </tbody>
+                            <thead class="bg-gray-50 text-[9px] uppercase text-gray-500"><tr><th class="p-2 border-b">Data</th><th class="p-2 border-b text-yellow-600">Gord.</th><th class="p-2 border-b text-pink-600">Prot.</th><th class="p-2 border-b text-cyan-600">Lact.</th><th class="p-2 border-b text-red-600">CCS</th><th class="p-2 border-b text-purple-600">CTB</th><th class="p-2 border-b text-gray-500">NUL</th></tr></thead>
+                            <tbody id="tbody-qualidade-diaria" class="divide-y divide-gray-100 font-medium text-gray-600"></tbody>
                         </table>
                     </div>
                 </div>
             </div>
 
             <div id="container-graficos-mensais" class="space-y-4 hidden">
-                <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 view-vol">
-                    <h3 class="font-black text-[10px] text-gray-500 uppercase tracking-widest mb-2"><i class="fas fa-chart-bar mr-1 text-indigo-500"></i> Volume Mensal Acumulado (L)</h3>
-                    <canvas id="chartProdMensal" height="200"></canvas>
-                </div>
-                <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 view-vol">
-                    <h3 class="font-black text-[10px] text-gray-500 uppercase tracking-widest mb-2"><i class="fas fa-tachometer-alt mr-1 text-green-500"></i> Média Mensal (L/Vaca)</h3>
-                    <canvas id="chartLvacaMensal" height="150"></canvas>
-                </div>
-                
-                <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 view-qual">
-                    <h3 class="font-black text-[10px] text-gray-500 uppercase tracking-widest mb-2"><i class="fas fa-cheese mr-1 text-yellow-500"></i> Evolução de Sólidos (%)</h3>
-                    <canvas id="chartSolidos" height="180"></canvas>
-                </div>
-                <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 view-qual">
-                    <h3 class="font-black text-[10px] text-gray-500 uppercase tracking-widest mb-2"><i class="fas fa-vial mr-1 text-red-500"></i> Sanidade & Nutrição (Médias)</h3>
-                    <canvas id="chartSaude" height="200"></canvas>
-                </div>
-                
-                <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 view-vol">
-                    <h3 class="font-black text-[10px] text-gray-500 uppercase tracking-widest mb-2"><i class="fas fa-money-bill-wave mr-1 text-green-600"></i> Preço Pago (R$/L)</h3>
-                    <canvas id="chartPreco" height="140"></canvas>
-                </div>
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 view-vol"><h3 class="font-black text-[10px] text-gray-500 uppercase tracking-widest mb-2"><i class="fas fa-chart-bar mr-1 text-indigo-500"></i> Volume Mensal (L)</h3><canvas id="chartProdMensal" height="200"></canvas></div>
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 view-vol"><h3 class="font-black text-[10px] text-gray-500 uppercase tracking-widest mb-2"><i class="fas fa-tachometer-alt mr-1 text-green-500"></i> Média (L/Vaca)</h3><canvas id="chartLvacaMensal" height="150"></canvas></div>
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 view-qual"><h3 class="font-black text-[10px] text-gray-500 uppercase tracking-widest mb-2"><i class="fas fa-cheese mr-1 text-yellow-500"></i> Sólidos (%)</h3><canvas id="chartSolidos" height="180"></canvas></div>
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 view-qual"><h3 class="font-black text-[10px] text-gray-500 uppercase tracking-widest mb-2"><i class="fas fa-vial mr-1 text-red-500"></i> Sanidade & Nutrição</h3><canvas id="chartSaude" height="200"></canvas></div>
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 view-vol"><h3 class="font-black text-[10px] text-gray-500 uppercase tracking-widest mb-2"><i class="fas fa-money-bill-wave mr-1 text-green-600"></i> Preço Pago (R$/L)</h3><canvas id="chartPreco" height="140"></canvas></div>
             </div>
         </section>
 
@@ -190,13 +150,9 @@
                 <button id="btn-acao-tempo-60" class="btn-acao-tempo flex-1 py-2 text-[10px] font-black uppercase tracking-wider rounded-lg border text-gray-400" onclick="setHorizonte(60)">Janela 60D</button>
                 <button id="btn-acao-tempo-null" class="btn-acao-tempo flex-1 py-2 text-[10px] font-black uppercase tracking-wider rounded-lg border text-gray-400" onclick="setHorizonte(null)">Todo o Futuro</button>
             </div>
-
             <div id="lista-acoes"></div>
-
             <div class="mt-4 mb-2">
-                <button id="btn-toggle-bezerros" onclick="toggleBezerros()" class="w-full py-3.5 bg-pink-50 text-pink-700 font-black uppercase tracking-widest text-[10px] rounded-xl border border-pink-200 shadow-sm transition-all">
-                    <i class="fas fa-baby-carriage mr-2"></i>Exibir Aleitamento e B19
-                </button>
+                <button id="btn-toggle-bezerros" onclick="toggleBezerros()" class="w-full py-3.5 bg-pink-50 text-pink-700 font-black uppercase tracking-widest text-[10px] rounded-xl border border-pink-200 shadow-sm transition-all"><i class="fas fa-baby-carriage mr-2"></i>Exibir Aleitamento e B19</button>
             </div>
         </section>
 
@@ -214,7 +170,7 @@
                             <input type="text" inputmode="numeric" id="brinco" onblur="formatarBrincoUI(this)" required class="w-full p-3 bg-gray-50 border-2 border-gray-200 rounded-xl font-bold focus:border-green-500 focus:bg-white outline-none transition-colors">
                         </div>
                         <div>
-                            <label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Data do Evento</label>
+                            <label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Data</label>
                             <input type="date" id="data" required class="w-full p-3 bg-gray-50 border-2 border-gray-200 rounded-xl font-bold focus:border-green-500 focus:bg-white outline-none text-xs transition-colors">
                         </div>
                     </div>
@@ -228,34 +184,40 @@
                             <option value="Secagem de Descarte">Secagem de Descarte (Secada)</option>
                             <option value="Nascimento">Nascimento na Quinta</option>
                             <option value="Compra">Compra de Animal</option>
+                            <option value="Atualizar Foto">📸 Atualizar Foto do Animal</option>
                             <option value="Vacina B19">Vacina B19</option>
                             <option value="Propriedade">Troca de Proprietário</option>
                             <option value="Saída">Saída (Venda/Morte/Consumo)</option>
                             <option value="Troca de Brinco">Troca de Brinco (Correção Numérica)</option>
                         </select>
                     </div>
+
+                    <div id="bloco-foto" class="hidden col-span-2 bg-purple-50 p-4 rounded-xl border border-purple-200 mt-2 text-center">
+                        <label class="block w-full py-3 bg-purple-600 hover:bg-purple-700 text-white font-black rounded-lg cursor-pointer transition-colors shadow-sm text-sm uppercase tracking-widest">
+                            <i class="fas fa-camera mr-2"></i>Tirar Foto ou Escolher
+                            <input type="file" id="input-foto" accept="image/*" class="hidden" onchange="previewFoto(this)">
+                        </label>
+                        <div id="preview-foto-container">
+                            <img id="preview-foto" src="" alt="Pré-visualização">
+                            <p class="text-[10px] text-purple-600 mt-2 font-bold uppercase"><i class="fas fa-check-circle mr-1"></i>Imagem pronta</p>
+                        </div>
+                    </div>
+
                     <div id="bloco-parto-extra" class="hidden col-span-2 bg-blue-50 p-4 rounded-xl border border-blue-200 mt-2">
                         <label class="flex items-center space-x-3 text-xs font-black text-blue-900 uppercase cursor-pointer mb-2">
                             <input type="checkbox" id="check-registrar-cria" onchange="toggleCriaFields()" class="w-5 h-5 text-blue-600 rounded">
                             <span>Registar vitelo(a)?</span>
                         </label>
                         <div id="campos-cria" class="hidden grid grid-cols-2 gap-3 pt-3 border-t border-blue-200 mt-2">
-                            <div>
-                                <label class="block text-[10px] font-black text-gray-500 uppercase mb-1">Brinco Sugerido</label>
-                                <input type="text" inputmode="numeric" id="brinco-cria" onblur="formatarBrincoUI(this)" class="w-full p-2 bg-white border border-blue-100 rounded-lg font-bold outline-none focus:border-blue-500 text-blue-800">
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-black text-gray-500 uppercase mb-1">Proprietário</label>
-                                <select id="proprietario-cria" class="w-full p-2 bg-white border border-blue-100 rounded-lg font-bold outline-none focus:border-blue-500">
-                                    <option value="Mateus">Mateus</option>
-                                    <option value="Alberto">Alberto</option>
-                                </select>
-                            </div>
+                            <div><label class="block text-[10px] font-black text-gray-500 uppercase mb-1">Brinco Sugerido</label><input type="text" inputmode="numeric" id="brinco-cria" onblur="formatarBrincoUI(this)" class="w-full p-2 bg-white border border-blue-100 rounded-lg font-bold outline-none focus:border-blue-500 text-blue-800"></div>
+                            <div><label class="block text-[10px] font-black text-gray-500 uppercase mb-1">Proprietário</label><select id="proprietario-cria" class="w-full p-2 bg-white border border-blue-100 rounded-lg font-bold outline-none focus:border-blue-500"><option value="Mateus">Mateus</option><option value="Alberto">Alberto</option></select></div>
                         </div>
                     </div>
+
                     <div id="cont-d1"><label id="lab-d1" class="block text-[10px] font-black text-gray-400 uppercase mb-1">Touro / Sémen</label><input type="text" id="info1" class="w-full p-3 bg-gray-50 border-2 border-gray-200 rounded-xl font-bold outline-none focus:border-green-500 focus:bg-white transition-colors"></div>
                     <div id="cont-d2" class="hidden"><label id="lab-d2" class="block text-[10px] font-black text-gray-400 uppercase mb-1">Info 2</label><input type="text" id="info2" class="w-full p-3 bg-gray-50 border-2 border-gray-200 rounded-xl font-bold outline-none focus:border-green-500 focus:bg-white transition-colors"></div>
                     <div id="cont-d3" class="hidden"><label id="lab-d3" class="block text-[10px] font-black text-gray-400 uppercase mb-1">Info 3</label><input type="text" id="info3" class="w-full p-3 bg-gray-50 border-2 border-gray-200 rounded-xl font-bold outline-none focus:border-green-500 focus:bg-white transition-colors"></div>
+                    
                     <button type="submit" id="btn-salvar" class="w-full bg-green-700 hover:bg-green-800 text-white font-black py-5 rounded-2xl shadow-lg active:transform active:scale-95 transition-all text-xs uppercase tracking-widest mt-4"><i class="fas fa-paper-plane mr-2"></i>Registar Manejo</button>
                 </form>
             </div>
@@ -266,15 +228,13 @@
                 <input type="text" inputmode="numeric" id="input-busca-prontuario" onblur="formatarBrincoUI(this)" placeholder="Digite o brinco..." class="w-full p-3 border-2 border-gray-200 rounded-xl font-bold focus:border-green-500 outline-none text-center text-xl shadow-sm">
                 <button onclick="pesquisarProntuario()" class="bg-green-700 px-6 rounded-xl text-white hover:bg-green-600 transition shadow-sm"><i class="fas fa-search"></i></button>
             </div>
-            <div id="resultado-prontuario">
-                <p class="text-center text-gray-400 italic text-sm mt-10">Busque um animal para analisar a sua ficha completa.</p>
-            </div>
+            <div id="resultado-prontuario"><p class="text-center text-gray-400 italic text-sm mt-10">Busque um animal para analisar a ficha.</p></div>
         </section>
 
     </main>
 </div>
 
-<div id="loading" class="hidden fixed inset-0 bg-white/90 z-[300] flex items-center justify-center backdrop-blur-sm">
+<div id="loading" class="hidden fixed inset-0 bg-white/90 z-[300] flex flex-col items-center justify-center backdrop-blur-sm">
     <div class="text-center">
         <i class="fas fa-cow fa-bounce text-5xl text-green-700 mb-3"></i>
         <p class="font-black text-xs uppercase tracking-widest text-green-800" id="txt-loading">Sincronizar...</p>
@@ -282,15 +242,20 @@
 </div>
 
 <script>
+    // --- CREDENCIAIS E APIS ---
     const API_URL = "https://script.google.com/macros/s/AKfycbxxyvefDRTk6H_LsQj4udhXcpC_VSk-0jRl46GJIwgJP2GHBh6cVZLFrlkCDpI-YZ4Q/exec";
+    const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/dmvxu7ioq/image/upload";
+    const CLOUDINARY_PRESET = "fotos_vacas";
+
+    // --- VARIÁVEIS GLOBAIS ---
     let cache = null, cacheProducao = null;
     let filtroAcoes = { tipo: 'todos', horizonteDias: 60 };
     let mostrarBezerreiros = false;
     let graficosAtivos = {};
-
     let modoProd = 'mes'; 
     let viewFiltro = 'tudo'; 
 
+    // --- ARRANQUE E LOGIN ---
     document.addEventListener('DOMContentLoaded', () => {
         let hoje = new Date();
         document.getElementById('filtro-prod-mes').value = hoje.getMonth() + 1;
@@ -301,9 +266,31 @@
         if (savedPwd) { fecharTelaLogin(); carregarDadosForcado(savedPwd); }
     });
 
-    function efetuarLogin(e) { e.preventDefault(); const pwd = document.getElementById('input-senha').value; document.getElementById('btn-login').innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; localStorage.setItem('vaquinhas_pwd', pwd); carregarDadosForcado(pwd); }
-    function fecharTelaLogin() { const t = document.getElementById('tela-login'), a = document.getElementById('app-content'); t.classList.add('opacity-0', 'pointer-events-none'); setTimeout(() => { t.classList.add('hidden'); a.classList.remove('hidden'); setTimeout(() => a.classList.remove('opacity-0'), 50); }, 300); switchJanela('inventario'); }
-    function abrirTelaLogin(msgErro = null) { localStorage.removeItem('vaquinhas_pwd'); const t = document.getElementById('tela-login'), a = document.getElementById('app-content'); document.getElementById('input-senha').value = ''; document.getElementById('btn-login').innerHTML = 'Entrar no Sistema'; if (msgErro) alert(msgErro); a.classList.add('hidden', 'opacity-0'); t.classList.remove('hidden', 'opacity-0', 'pointer-events-none'); }
+    function efetuarLogin(e) { 
+        e.preventDefault(); 
+        const pwd = document.getElementById('input-senha').value; 
+        document.getElementById('btn-login').innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; 
+        localStorage.setItem('vaquinhas_pwd', pwd); 
+        carregarDadosForcado(pwd); 
+    }
+    
+    function fecharTelaLogin() { 
+        const t = document.getElementById('tela-login'), a = document.getElementById('app-content'); 
+        t.classList.add('opacity-0', 'pointer-events-none'); 
+        setTimeout(() => { t.classList.add('hidden'); a.classList.remove('hidden'); setTimeout(() => a.classList.remove('opacity-0'), 50); }, 300); 
+        switchJanela('inventario'); 
+    }
+    
+    function abrirTelaLogin(msgErro = null) { 
+        localStorage.removeItem('vaquinhas_pwd'); 
+        const t = document.getElementById('tela-login'), a = document.getElementById('app-content'); 
+        document.getElementById('input-senha').value = ''; 
+        document.getElementById('btn-login').innerHTML = 'Entrar no Sistema'; 
+        if (msgErro) alert(msgErro); 
+        a.classList.add('hidden', 'opacity-0'); 
+        t.classList.remove('hidden', 'opacity-0', 'pointer-events-none'); 
+    }
+    
     function fazerLogout() { abrirTelaLogin(); }
 
     function switchJanela(id) {
@@ -318,32 +305,273 @@
 
     async function carregarDadosForcado(senhaObj) {
         let senha = senhaObj || localStorage.getItem('vaquinhas_pwd') || "";
-        document.getElementById('loading').classList.remove('hidden'); document.getElementById('txt-loading').innerText = "Autenticar...";
+        document.getElementById('loading').classList.remove('hidden'); 
+        document.getElementById('txt-loading').innerText = "A Autenticar...";
         try {
             const [jsonAcoes, jsonProd] = await Promise.all([
-                fetch(API_URL + "?action=relatorioAcoes&senha=" + encodeURIComponent(senha)).then(r=>r.json()),
-                fetch(API_URL + "?action=relatorioProducao&senha=" + encodeURIComponent(senha)).then(r=>r.json())
+                fetch(API_URL + "?action=relatorioAcoes&senha=" + encodeURIComponent(senha), { redirect: "follow" }).then(r=>r.json()),
+                fetch(API_URL + "?action=relatorioProducao&senha=" + encodeURIComponent(senha), { redirect: "follow" }).then(r=>r.json())
             ]);
+            
             if (jsonAcoes.status === 'auth_error') { abrirTelaLogin(jsonAcoes.msg); return; }
             if (jsonAcoes.error || jsonAcoes.status === 'erro') throw new Error(jsonAcoes.msg || jsonAcoes.error);
-            cache = jsonAcoes; if(!jsonProd.error && jsonProd.status !== 'erro') cacheProducao = jsonProd;
-            fecharTelaLogin(); renderDashboard('todos'); setFiltroTipo('todos'); setHorizonte(60); atualizarCamposForm();
+            
+            cache = jsonAcoes; 
+            if(!jsonProd.error && jsonProd.status !== 'erro') cacheProducao = jsonProd;
+            
+            fecharTelaLogin(); 
+            renderDashboard('todos'); setFiltroTipo('todos'); setHorizonte(60); atualizarCamposForm();
             if(document.getElementById('janela-producao').classList.contains('ativa')) renderGraficosProducao();
-        } catch (e) { alert("Erro de servidor. Verifique a ligação com a internet e as configurações."); document.getElementById('btn-login').innerHTML = 'Entrar no Sistema'; } 
-        finally { document.getElementById('loading').classList.add('hidden'); }
+        } catch (e) { 
+            alert("Erro de comunicação com o servidor: " + e.message); 
+            document.getElementById('btn-login').innerHTML = 'Entrar no Sistema'; 
+        } finally { 
+            document.getElementById('loading').classList.add('hidden'); 
+        }
     }
+    
     function carregarDados() { carregarDadosForcado(); }
 
+    // --- FUNÇÕES UTILITÁRIAS ---
     function formatarBrincoUI_internal(val) { let n = String(val).replace(/\D/g, ''); return n ? n.padStart(6, '0') : ''; }
     function formatarBrincoUI(input) { input.value = formatarBrincoUI_internal(input.value); }
+    function getIdadeFormatada(idadeDias) { if (!idadeDias || idadeDias >= 9999) return "N/A"; let anos = Math.floor(idadeDias / 365); let meses = Math.floor((idadeDias % 365) / 30); if (anos > 0) return `${anos}a ${meses}m`; return `${meses}m`; }
 
-    function getIdadeFormatada(idadeDias) {
-        if (!idadeDias || idadeDias >= 9999) return "N/A";
-        let anos = Math.floor(idadeDias / 365); let meses = Math.floor((idadeDias % 365) / 30);
-        if (anos > 0) return `${anos}a ${meses}m`; return `${meses}m`;
+    // --- LÓGICA DE VALIDAÇÕES DO FORMULÁRIO (LANÇAR) ---
+    function toggleCriaFields() { 
+        const isChecked = document.getElementById('check-registrar-cria').checked; 
+        const campos = document.getElementById('campos-cria'); 
+        if (isChecked) { 
+            campos.classList.remove('hidden'); 
+            if(cache && cache.dadosFormulario) document.getElementById('brinco-cria').value = cache.dadosFormulario.proximoBrinco; 
+        } else { 
+            campos.classList.add('hidden'); 
+            document.getElementById('brinco-cria').value = ""; 
+        } 
+    }
+    
+    function mostrarErroValidacao(msg) { 
+        document.getElementById('txt-erro-manejo').innerText = msg; 
+        document.getElementById('box-erro-manejo').classList.remove('hidden'); 
+        window.scrollTo({ top: 0, behavior: 'smooth' }); 
     }
 
-    // --- MOTOR BI: GRÁFICOS DE PRODUÇÃO ---
+    function atualizarCamposForm() {
+        document.getElementById('box-erro-manejo').classList.add('hidden');
+        const ev = document.getElementById('evento').value, d1 = document.getElementById('cont-d1'), l1 = document.getElementById('lab-d1'), d2 = document.getElementById('cont-d2'), l2 = document.getElementById('lab-d2'), d3 = document.getElementById('cont-d3'), l3 = document.getElementById('lab-d3'), lBrinco = document.getElementById('lab-brinco'), inInfo1 = document.getElementById('info1'), inBrinco = document.getElementById('brinco');
+        
+        [d1, d2, d3, document.getElementById('bloco-parto-extra'), document.getElementById('bloco-foto')].forEach(c => c.classList.add('hidden'));
+        lBrinco.innerText = "Brinco Principal"; inInfo1.removeAttribute("onblur"); inInfo1.removeAttribute("inputmode"); inInfo1.value = ""; document.getElementById('info2').value = ""; document.getElementById('info3').value = ""; document.getElementById('check-registrar-cria').checked = false; toggleCriaFields(); document.getElementById('input-foto').value = ''; document.getElementById('preview-foto-container').style.display = 'none';
+
+        switch(ev) {
+            case "Nascimento": configField(l1, d1, "Sexo (F/M)"); configField(l2, d2, "Brinco da Mãe"); configField(l3, d3, "Nome do Pai"); if (cache && cache.dadosFormulario) inBrinco.value = cache.dadosFormulario.proximoBrinco; break;
+            case "Compra": configField(l1, d1, "Sexo (F/M)"); configField(l3, d3, "Proprietário Inicial"); if (cache && cache.dadosFormulario) inBrinco.value = cache.dadosFormulario.proximoBrinco; break;
+            case "Atualizar Foto": document.getElementById('bloco-foto').classList.remove('hidden'); break;
+            case "Propriedade": configField(l1, d1, "Novo Proprietário"); break;
+            case "Inseminação": configField(l1, d1, "Touro / Sémen"); if (cache && cache.dadosFormulario && cache.dadosFormulario.machoMaisVelho) inInfo1.value = cache.dadosFormulario.machoMaisVelho; break;
+            case "Secagem (Pré-Parto)": case "Secagem de Descarte": configField(l1, d1, "Antibiótico Usado"); break;
+            case "Parto": configField(l1, d1, "Sexo da Cria (F/M)"); document.getElementById('bloco-parto-extra').classList.remove('hidden'); break;
+            case "Saída": configField(l1, d1, "Motivo (Venda/Morte/Consumo)"); break;
+            case "Troca de Brinco": lBrinco.innerText = "Brinco Antigo"; configField(l1, d1, "Novo Número"); inInfo1.setAttribute("onblur", "formatarBrincoUI(this)"); inInfo1.setAttribute("inputmode", "numeric"); break;
+        }
+    }
+    function configField(lab, cont, text) { lab.innerText = text; cont.classList.remove('hidden'); }
+
+    // --- UPLOAD PARA CLOUDINARY ---
+    function previewFoto(input) {
+        if (input.files && input.files[0]) {
+            let reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('preview-foto').src = e.target.result;
+                document.getElementById('preview-foto-container').style.display = 'block';
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    async function uploadParaCloudinary(file) {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', CLOUDINARY_PRESET);
+        try {
+            const res = await fetch(CLOUDINARY_URL, { method: 'POST', body: formData });
+            const data = await res.json();
+            if(!data.secure_url) throw new Error("Erro no retorno da imagem.");
+            return data.secure_url;
+        } catch (err) { throw new Error("Falha ao enviar a foto para a nuvem. Verifique a internet."); }
+    }
+
+    // --- SALVAR MANEJO ---
+    async function salvarManejo(e) {
+        e.preventDefault(); document.getElementById('box-erro-manejo').classList.add('hidden'); 
+        const ev = document.getElementById('evento').value, mainDataStr = document.getElementById('data').value;
+        let info1 = document.getElementById('info1').value, info2 = document.getElementById('info2').value, info3 = document.getElementById('info3').value;
+        let mainBrincoRaw = document.getElementById('brinco').value;
+        let mainBrinco = formatarBrincoUI_internal(mainBrincoRaw);
+        if (!mainBrinco && (ev === "Nascimento" || ev === "Compra") && cache && cache.dadosFormulario) mainBrinco = cache.dadosFormulario.proximoBrinco;
+
+        if (cache && cache.animais) {
+            const animal = cache.animais[mainBrinco], dEv = new Date(mainDataStr + "T00:00:00"), dHoj = new Date(); dHoj.setHours(0,0,0,0);
+            if (dEv > dHoj) return mostrarErroValidacao("A data do evento não pode ser lançada no futuro.");
+            if (!animal && ev !== "Nascimento" && ev !== "Compra") return mostrarErroValidacao(`O animal ${mainBrinco} não existe. Registe o seu Nascimento ou Compra primeiro.`);
+            if (animal) {
+                if (animal.descartada && ev !== "Saída" && ev !== "Troca de Brinco" && ev !== "Atualizar Foto") return mostrarErroValidacao("Animal inativo/descartado.");
+                if (animal.descartada && ev === "Saída") return mostrarErroValidacao(`O animal ${mainBrinco} já registou Saída anteriormente.`);
+                if (animal.nascimento && dEv.getTime() < animal.nascimento) return mostrarErroValidacao("A data é anterior ao nascimento do animal.");
+                const evFemea = ["Inseminação", "Parto", "Secagem (Pré-Parto)", "Encerramento Reprodutivo", "Secagem de Descarte", "Vacina B19"];
+                if (evFemea.includes(ev) && animal.sexo !== "F") return mostrarErroValidacao(`O evento '${ev}' é exclusivo para fêmeas.`);
+                if (ev === "Inseminação" && animal.idadeDias < 365) return mostrarErroValidacao(`Inseminação Bloqueada: Esta bezerra possui apenas ${Math.floor(animal.idadeDias/30)} meses.`);
+                if (ev === "Parto") { if (animal.statusRep === "Vazia" && !animal.dtUltimaIA) return mostrarErroValidacao("Parto bloqueado: Não há registo prévio de Inseminação."); if (animal.dtUltimoParto && ((dEv.getTime() - animal.dtUltimoParto) / 86400000) < 260) return mostrarErroValidacao(`Intervalo biológico impossível. O último parto foi há menos de 260 dias.`); }
+                if (ev === "Secagem (Pré-Parto)") { if (animal.statusProd !== "Lactando") return mostrarErroValidacao("A vaca não está em lactação."); if (animal.statusRep !== "Prenhe" && animal.statusRep !== "Pendente") return mostrarErroValidacao("Secagem Pré-Parto exige fêmea prenhe (ou IA pendente)."); }
+                if (ev === "Encerramento Reprodutivo" && animal.statusRep !== "Pendente") return mostrarErroValidacao("A fêmea não possui Inseminação pendente para desistir.");
+                if (ev === "Vacina B19" && animal.vacinaB19) return mostrarErroValidacao("Esta bezerra já possui a vacina B19 registada.");
+                if (ev === "Atualizar Foto" && !document.getElementById('input-foto').files[0]) return mostrarErroValidacao("Tem de escolher ou tirar uma foto primeiro.");
+            }
+            if (ev === "Parto" && document.getElementById('check-registrar-cria').checked) {
+                const bCria = formatarBrincoUI_internal(document.getElementById('brinco-cria').value);
+                if (cache.animais[bCria] && !cache.animais[bCria].descartada) return mostrarErroValidacao(`O brinco sugerido para a cria (${bCria}) já está em uso.`);
+            }
+        }
+
+        const btn = document.getElementById('btn-salvar'); btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>A Gravar...';
+        document.getElementById('loading').classList.remove('hidden'); 
+
+        // UPLOAD DA FOTO PARA CLOUDINARY ANTES DE ENVIAR PARA A PLANILHA
+        if (ev === "Atualizar Foto") {
+            document.getElementById('txt-loading').innerText = "A Enviar Foto...";
+            const fotoFile = document.getElementById('input-foto').files[0];
+            try {
+                let fotoUrl = await uploadParaCloudinary(fotoFile);
+                info1 = fotoUrl; 
+            } catch (err) {
+                document.getElementById('loading').classList.add('hidden'); btn.disabled = false; btn.innerHTML = 'Registar Manejo';
+                return mostrarErroValidacao(err.message);
+            }
+        }
+
+        document.getElementById('txt-loading').innerText = "A Enviar ao Diário...";
+        let eventosEnvio = []; 
+        if (ev === "Parto") {
+            const registrar = document.getElementById('check-registrar-cria').checked;
+            eventosEnvio.push({ brinco: mainBrinco, data: mainDataStr, evento: "Parto", info1: info1, info2: "", info3: "" });
+            if (registrar) {
+                let bC = formatarBrincoUI_internal(document.getElementById('brinco-cria').value || (cache ? cache.dadosFormulario.proximoBrinco : ''));
+                let paiId = (cache && cache.dadosFormulario.historicoIAs[mainBrinco]) || "";
+                eventosEnvio.push({ brinco: bC, data: mainDataStr, evento: "Nascimento", info1: info1, info2: mainBrinco, info3: paiId }, { brinco: bC, data: mainDataStr, evento: "Propriedade", info1: document.getElementById('proprietario-cria').value });
+            }
+        } else { eventosEnvio.push({ brinco: mainBrinco, data: mainDataStr, evento: ev, info1: info1, info2: info2, info3: info3 }); }
+
+        const payloadFinal = { senha: localStorage.getItem('vaquinhas_pwd') || "", eventos: eventosEnvio };
+
+        try {
+            const res = await fetch(API_URL, { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payloadFinal) }).then(r=>r.json());
+            if(res.status === 'auth_error') { abrirTelaLogin(res.msg); return; }
+            if(res.status === 'sucesso') {
+                alert(res.msg); document.getElementById('formManejo').reset(); document.getElementById('data').valueAsDate = new Date();
+                document.getElementById('check-registrar-cria').checked = false; toggleCriaFields(); atualizarCamposForm();
+                document.getElementById('preview-foto-container').style.display = 'none';
+                cache = null; carregarDadosForcado(localStorage.getItem('vaquinhas_pwd')); 
+            } else throw new Error(res.msg);
+        } catch (err) { mostrarErroValidacao("Falha na gravação: " + err.message); document.getElementById('loading').classList.add('hidden'); } 
+        finally { btn.disabled = false; btn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Registar Manejo'; }
+    }
+
+    // --- PRONTUÁRIO INDIVIDUAL (C/ FOTO) ---
+    function pesquisarProntuario() {
+        const b = formatarBrincoUI_internal(document.getElementById('input-busca-prontuario').value); const res = document.getElementById('resultado-prontuario');
+        if (!cache || !cache.animais || !cache.animais[b]) { res.innerHTML = `<div class="p-4 bg-yellow-50 text-yellow-800 rounded-xl border border-yellow-200 text-center font-bold"><i class="fas fa-search-minus text-2xl block mb-2"></i>O brinco ${b} não possui registos no Diário.</div>`; return; }
+        const animal = cache.animais[b]; const evs = animal.eventos || []; const hoje = new Date(); hoje.setHours(0,0,0,0);
+        
+        let fotoPerfilUrl = null;
+        [...evs].reverse().forEach(e => { if (e.tipo === "atualizar foto" && !fotoPerfilUrl) fotoPerfilUrl = e.info1; });
+
+        let crias = []; for (let k in cache.animais) { let n = (cache.animais[k].eventos||[]).find(e => e.tipo === "nascimento"); if (n && n.info2 === b) crias.push({ brinco: k, sexo: cache.animais[k].sexo, descartada: cache.animais[k].descartada }); }
+        let lactacoes = []; let lactAtual = null;
+        evs.forEach(e => { if (e.tipo === "parto" || e.tipo === "parida") { if (lactAtual) lactacoes.push(lactAtual); lactAtual = { dataParto: new Date(e.data), ias: 0, dataSecagem: null }; } else if (lactAtual) { if (e.tipo === "inseminacao" || e.tipo === "cobertura") lactAtual.ias++; if (e.tipo.includes("secagem") || e.tipo.includes("seca")) { if (!lactAtual.dataSecagem) lactAtual.dataSecagem = new Date(e.data); } } });
+        if (lactAtual) lactacoes.push(lactAtual);
+
+        let statLactHTML = '';
+        if (lactacoes.length > 0) {
+            statLactHTML = `<h4 class="font-black text-[10px] text-gray-500 uppercase tracking-widest mt-6 mb-3"><i class="fas fa-chart-line mr-1"></i> Histórico Produtivo</h4><div class="space-y-3">`;
+            lactacoes.forEach((L, idx) => {
+                let fim = L.dataSecagem ? L.dataSecagem : hoje; let del = Math.floor((fim - L.dataParto) / 86400000); let perSecoHtml = '';
+                if (L.dataSecagem && lactacoes[idx+1]) { let diasSecos = Math.floor((lactacoes[idx+1].dataParto - L.dataSecagem) / 86400000); perSecoHtml = `<span class="bg-orange-100 text-orange-700 px-2 py-1 rounded">Período Seco: ${diasSecos}d</span>`; }
+                statLactHTML += `<div class="bg-gray-50 p-3 rounded-xl border border-gray-200 text-xs font-bold text-gray-600 flex justify-between items-center shadow-sm"><div><span class="text-blue-600 uppercase text-[10px] block mb-0.5">${idx+1}ª Lactação</span>DEL: <span class="text-gray-900">${del} dias</span> &bull; <span class="${L.ias > 2 ? 'text-red-500' : 'text-gray-900'}">${L.ias} IAs</span></div><div class="text-right text-[10px]">${perSecoHtml}</div></div>`;
+            });
+            statLactHTML += `</div>`;
+        }
+
+        let criasHTML = '';
+        if (crias.length > 0) {
+            criasHTML = `<h4 class="font-black text-[10px] text-gray-500 uppercase tracking-widest mt-6 mb-3"><i class="fas fa-sitemap mr-1"></i> Descendência Genética</h4><div class="flex flex-wrap gap-2">`;
+            criasHTML += crias.map(c => `<span class="px-2 py-1.5 text-[10px] font-black rounded uppercase shadow-sm ${c.descartada ? 'bg-gray-200 text-gray-500 border border-gray-300' : (c.sexo==='F'?'bg-pink-100 text-pink-700 border border-pink-200':'bg-blue-100 text-blue-700 border border-blue-200')}"><i class="fas ${c.sexo==='F'?'fa-venus':'fa-mars'} mr-1"></i>${c.brinco} ${c.descartada?'(INATIVO)':''}</span>`).join('');
+            criasHTML += `</div>`;
+        }
+
+        let linhaTempoHTML = `<h4 class="font-black text-[10px] text-gray-500 uppercase tracking-widest mt-6 mb-4"><i class="fas fa-history mr-1"></i> Linha do Tempo</h4><div class="border-l-2 border-green-200 ml-3 pl-4 space-y-4 pb-4">`;
+        [...evs].reverse().forEach(e => {
+            let hideInfo = e.tipo === "atualizar foto" ? true : false;
+            linhaTempoHTML += `<div class="relative"><div class="absolute -left-[23px] w-3 h-3 bg-green-500 border-2 border-white rounded-full mt-1"></div><div class="text-[10px] font-black text-gray-400 mb-0.5">${new Date(e.data).toLocaleDateString('pt-BR', {day:'2-digit',month:'2-digit',year:'numeric'})}</div><div class="font-black text-sm text-gray-800 uppercase tracking-tighter">${e.tipo}</div>${!hideInfo && (e.info1 || e.info2 || e.info3) ? `<div class="text-xs text-gray-500 mt-1 font-medium bg-gray-50 p-2 rounded-lg inline-block border border-gray-100">${e.info1} ${e.info2} ${e.info3}</div>` : ''}</div>`; 
+        });
+        linhaTempoHTML += `</div>`;
+
+        let headerFotoHTML = fotoPerfilUrl ? `<img src="${fotoPerfilUrl}" class="foto-perfil float-right ml-4" alt="Foto">` : `<div class="foto-perfil float-right ml-4 flex items-center justify-center bg-gray-200 text-gray-400"><i class="fas fa-cow text-2xl"></i></div>`;
+
+        res.innerHTML = `
+            <div class="bg-white p-5 rounded-2xl shadow-md border-t-4 ${animal.descartada ? 'border-gray-500' : 'border-green-600'}">
+                <div class="mb-4 pb-4 border-b border-gray-100 clearfix">
+                    ${headerFotoHTML}
+                    <div>
+                        <h3 class="font-black text-3xl text-gray-900 tracking-tighter">${animal.brinco}</h3>
+                        <div class="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">${animal.descartada ? '<span class="text-red-500">INATIVO</span>' : '<span class="text-green-600">ATIVO</span>'} &bull; ${animal.proprietario}</div>
+                        <div class="text-xs font-black px-3 py-1 rounded bg-gray-100 mt-2 inline-block">${animal.nascimento ? getIdadeFormatada(animal.idadeDias) : 'N/A'}</div>
+                        <div class="text-[10px] font-bold text-gray-400 uppercase inline-block ml-2"><i class="fas ${animal.sexo==='F'?'fa-venus text-pink-500':'fa-mars text-blue-500'} mr-1"></i>${animal.sexo}</div>
+                    </div>
+                </div>
+                ${!animal.descartada && animal.sexo === 'F' ? `<div class="grid grid-cols-2 gap-2 mt-2 text-center"><div class="bg-blue-50 border border-blue-100 p-2 rounded-xl"><div class="text-[9px] uppercase font-bold text-gray-500">Reprodutivo</div><div class="font-black text-blue-700 text-sm">${animal.statusRep}</div></div><div class="bg-green-50 border border-green-100 p-2 rounded-xl"><div class="text-[9px] uppercase font-bold text-gray-500">Produtivo</div><div class="font-black text-green-700 text-sm">${animal.statusProd}</div></div></div>` : ''}
+                ${statLactHTML}
+                ${criasHTML}
+                ${linhaTempoHTML}
+            </div>
+        `;
+    }
+
+    // --- DASHBOARD INVENTÁRIO ---
+    function renderDashboard(dono) {
+        if (!cache || !cache.dashboard) return;
+        document.querySelectorAll('.btn-filtro').forEach(b => b.classList.remove('btn-filter-active')); document.getElementById('btn-filtro-' + dono).classList.add('btn-filter-active');
+        const db = cache.dashboard; const p = (dono !== 'todos') ? db.proprietarios[dono] || { femeas: {}, machos: {} } : Object.values(db.proprietarios).reduce((a,c)=>{ for(let k in a.femeas){ a.femeas[k]+=c.femeas[k]||0; a.machos[k]+=c.machos[k]||0; } return a; }, {femeas:{ate_1:0,de_1_a_2:0,de_2_a_3:0,mais_de_3:0},machos:{ate_1:0,de_1_a_2:0,de_2_a_3:0,mais_de_3:0}});
+        document.getElementById('lista-demografia').innerHTML = Object.entries({ ate_1: "Até 1 ano", de_1_a_2: "1 a 2 anos", de_2_a_3: "2 a 3 anos", mais_de_3: "Mais de 3 anos" }).map(([k,v]) => `<tr class="hover:bg-gray-50"><td class="p-3 font-medium text-xs text-gray-600">${v}</td><td class="p-3 text-center font-black text-green-700">${p.femeas[k]||0}</td><td class="p-3 text-center font-black text-blue-700">${p.machos[k]||0}</td></tr>`).join('');
+        document.getElementById('val-lp').innerText = db.matriz.lactandoPrenhe || 0; document.getElementById('val-lv').innerText = db.matriz.lactandoVazia || 0; document.getElementById('val-sp').innerText = db.matriz.secaPrenhe || 0; document.getElementById('val-sv').innerText = db.matriz.secaVazia || 0; document.getElementById('val-del').innerText = (db.totalLactando > 0 ? Math.round(db.somaDEL / db.totalLactando) : 0) + " DEL Médio";
+    }
+
+    // --- LISTA DE AÇÕES ---
+    function setFiltroTipo(t) { filtroAcoes.tipo = t; document.querySelectorAll('.btn-acao-tipo').forEach(b => { b.classList.remove('btn-acao-active', 'text-gray-900'); b.classList.add('text-gray-400'); }); document.getElementById('btn-acao-tipo-' + t).classList.add('btn-acao-active', 'text-gray-900'); renderAcoes(); }
+    function setHorizonte(d) { filtroAcoes.horizonteDias = d; document.querySelectorAll('.btn-acao-tempo').forEach(b => { b.classList.remove('btn-acao-active', 'text-gray-900'); b.classList.add('text-gray-400'); }); document.getElementById('btn-acao-tempo-' + (d===null?'null':d)).classList.add('btn-acao-active', 'text-gray-900'); renderAcoes(); }
+    function filtrarPorHorizonte(lista, cd) { if (!filtroAcoes.horizonteDias || lista.length === 0) return lista; let minTime = Math.min(...lista.map(i => new Date(i[cd]).getTime())); let oldest = new Date(minTime); oldest.setHours(0,0,0,0); let limite = new Date(oldest); limite.setDate(limite.getDate() + filtroAcoes.horizonteDias); return lista.filter(i => { const d = new Date(i[cd]); return d <= limite; }); }
+    function toggleBezerros() { mostrarBezerreiros = !mostrarBezerreiros; const btn = document.getElementById('btn-toggle-bezerros'); if (mostrarBezerreiros) { btn.classList.replace('bg-pink-50', 'bg-pink-600'); btn.classList.replace('text-pink-700', 'text-white'); btn.innerHTML = '<i class="fas fa-eye-slash mr-2"></i>Ocultar Aleitamento e B19'; } else { btn.classList.replace('bg-pink-600', 'bg-pink-50'); btn.classList.replace('text-white', 'text-pink-700'); btn.innerHTML = '<i class="fas fa-baby-carriage mr-2"></i>Exibir Aleitamento e B19'; } renderAcoes(); }
+
+    function renderAcoes() {
+        const list = document.getElementById('lista-acoes'); if (!cache) return;
+        try {
+            let h = ''; const card = (t, ic, col, cont) => `<div class="mb-6 bg-white rounded-2xl shadow-sm border-t-4 ${col} overflow-hidden"><div class="bg-gray-50 px-4 py-3 border-b flex items-center justify-between"><h4 class="font-black text-[10px] uppercase tracking-widest text-gray-500"><i class="${ic} mr-2"></i>${t}</h4></div><div class="divide-y divide-gray-100">${cont}</div></div>`;
+            const vB19 = cache.vacinaB19 || []; const alei = cache.aleitamento || []; const part = filtrarPorHorizonte(cache.partos || [], 'data'); const sec = filtrarPorHorizonte(cache.secagem || [], 'data'); const vApt = cache.vacasAptas || []; const nApt = cache.novilhasAptas || [];
+            
+            if (filtroAcoes.tipo === 'todos' || filtroAcoes.tipo === 'secagem') { h += card('Previsão Secagem', 'fas fa-leaf text-orange-600', 'border-orange-500', sec.map(s => `<div class="p-3 flex justify-between items-center hover:bg-gray-50"><span class="font-bold text-lg text-gray-900">${s.brinco}</span><div class="text-orange-600 font-black text-sm"><i class="far fa-calendar-alt mr-1"></i> ${new Date(s.data).toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'})}</div></div>`).join('') || '<p class="p-4 text-center text-gray-400 text-xs italic">Sem eventos no período.</p>'); }
+            if (filtroAcoes.tipo === 'todos' || filtroAcoes.tipo === 'partos') { h += card('Previsão Partos', 'fas fa-baby-carriage text-red-600', 'border-red-600', part.map(p => `<div class="p-3 flex justify-between items-center hover:bg-gray-50"><div><span class="font-bold text-lg text-gray-900">${p.brinco}</span><span class="text-[9px] bg-gray-200 px-2 py-0.5 rounded font-black ml-1">${p.cat}</span></div><div class="text-red-600 font-black text-sm"><i class="far fa-calendar-alt mr-1"></i> ${new Date(p.data).toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'})}</div></div>`).join('') || '<p class="p-4 text-center text-gray-400 text-xs italic">Sem eventos no período.</p>'); }
+            if (filtroAcoes.tipo === 'todos' || filtroAcoes.tipo === 'aptas') {
+                h += card('Vacas Aptas (IA)', 'fas fa-venus-mars text-blue-600', 'border-blue-600', vApt.map(v => { let idS = cache.animais[v.brinco] ? getIdadeFormatada(cache.animais[v.brinco].idadeDias) : 'N/A'; return `<div class="p-3 flex justify-between items-center hover:bg-gray-50"><div><span class="font-bold text-lg">${v.brinco}</span> <span class="text-[9px] font-black text-gray-500 ml-1">(${idS})</span><div class="text-[9px] text-gray-500 font-bold uppercase mt-0.5">Lact: ${v.lact} &bull; DEL: ${v.del}d</div></div><div><span class="text-[10px] px-2 py-1 rounded font-black ${v.tent>2?'bg-red-100 text-red-700':'bg-blue-50 text-blue-600'}">${v.tent}ª Tentativa</span></div></div>`; }).join('') || '<p class="p-4 text-center text-gray-400 text-xs italic">Nenhuma vaca apta.</p>');
+                h += card('Novilhas Aptas (IA)', 'fas fa-venus text-teal-600', 'border-teal-600', nApt.map(n => { let idS = cache.animais[n.brinco] ? getIdadeFormatada(cache.animais[n.brinco].idadeDias) : 'N/A'; return `<div class="p-3 flex justify-between items-center hover:bg-gray-50"><span class="font-bold text-lg">${n.brinco}</span><span class="text-[10px] font-black text-teal-700 bg-teal-50 px-2 py-1 rounded border">${idS}</span></div>`; }).join('') || '<p class="p-4 text-center text-gray-400 text-xs italic">Nenhuma novilha apta.</p>');
+            }
+            if (mostrarBezerreiros) {
+                h += card('Aleitamento', 'fas fa-bottle-water text-pink-600', 'border-pink-600', alei.map(a => `<div class="p-3 flex justify-between items-center hover:bg-gray-50"><div><b class="text-lg text-gray-900">${a.brinco}</b><br><small class="text-gray-400 font-bold uppercase text-[9px]">Fim: ${new Date(a.fim).toLocaleDateString('pt-BR')}</small></div><div class="text-pink-600 font-black px-4 py-1 bg-pink-50 rounded-full text-xs">${a.dieta}</div></div>`).join('') || '<p class="p-4 text-center text-gray-400 text-xs italic">Sem animais no leite.</p>');
+                if (vB19.length > 0) h += card('Vacinas Brucelose (B19)', 'fas fa-syringe text-purple-600', 'border-purple-600', vB19.map(v => `<div class="p-3 flex justify-between items-center hover:bg-gray-50"><span class="font-bold text-lg text-gray-900">${v.brinco}</span><span class="text-xs font-black text-purple-700 bg-purple-50 px-2 py-1 rounded">LIMITE: ${new Date(v.limite).toLocaleDateString('pt-BR')}</span></div>`).join(''));
+            }
+            list.innerHTML = h;
+        } catch (err) { list.innerHTML = `<div class="p-4 bg-red-100 text-red-700 font-bold text-center">Erro Visual</div>`; }
+    }
+
+    // --- GRÁFICOS DE PRODUÇÃO ---
     function setModoProd(m) {
         modoProd = m;
         document.querySelectorAll('.btn-prod').forEach(b => { b.classList.remove('bg-blue-50', 'text-blue-600', 'border-blue-200'); b.classList.add('text-gray-400'); });
@@ -383,7 +611,6 @@
 
         let lblX = []; let dCoop = [], dBez = [], dLact = []; let agrupMes = {}; 
         
-        // --- 1. MODO DIÁRIO (MÊS) ---
         if (modoProd === 'mes') {
             let diasNoMes = new Date(selAnoNum, selMes, 0).getDate();
             for(let i=1; i<=diasNoMes; i++) { lblX.push(i); dCoop.push(0); dBez.push(0); dLact.push(0); }
@@ -395,15 +622,14 @@
                 }
             });
 
-            // SUAVIZAÇÃO DE COLETAS (DIA SIM / DIA NÃO)
             for (let i = 0; i < dCoop.length; i++) {
-                if (dCoop[i] === 0 && dLact[i] > 0) { // Se não houve recolha, mas há vacas a dar leite
+                if (dCoop[i] === 0 && dLact[i] > 0) { 
                     let nextIdx = -1;
                     for (let j = i + 1; j < dCoop.length; j++) { if (dCoop[j] > 0) { nextIdx = j; break; } }
                     if (nextIdx !== -1) {
                         let gapLength = nextIdx - i + 1; let distributedVol = dCoop[nextIdx] / gapLength;
                         for (let k = i; k <= nextIdx; k++) dCoop[k] = distributedVol;
-                        i = nextIdx; // Salta à frente
+                        i = nextIdx; 
                     }
                 }
             }
@@ -418,7 +644,6 @@
                 labels: lblX, datasets: [ { label: 'L / Vaca', data: dLvaca, borderColor: '#10b981', spanGaps: true, tension: 0.3 } ]
             }, { responsive: true, plugins: { legend: { display: false } } });
 
-            // Tabela de Qualidade Diária
             let tbodyHtml = ''; let hasQualData = false;
             cacheProducao.qualidade.forEach(q => {
                 let d = new Date(q.data);
@@ -440,7 +665,6 @@
             if (!hasQualData) tbodyHtml = `<tr><td colspan="7" class="p-4 text-center text-gray-400 italic">Sem análises de qualidade registadas neste mês.</td></tr>`;
             document.getElementById('tbody-qualidade-diaria').innerHTML = tbodyHtml;
         } 
-        // --- 2. MODO MENSAL (12M ou ANO FECHADO) ---
         else {
             if (modoProd === '12m') {
                 let m = new Date(limite12M);
@@ -462,7 +686,6 @@
             cacheProducao.qualidade.forEach(q => {
                 let d = new Date(q.data); let k = `${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
                 if (agrupMes[k] !== undefined) {
-                    // EXCLUSÃO DE ZEROS (Ignora completamente testes nulos)
                     if(q.gordura > 0) { agrupMes[k].gord += q.gordura; agrupMes[k].qCGord++; }
                     if(q.proteina > 0) { agrupMes[k].prot += q.proteina; agrupMes[k].qCProt++; }
                     if(q.lactose > 0) { agrupMes[k].lact += q.lactose; agrupMes[k].qCLact++; }
@@ -513,172 +736,6 @@
             drawChart('chartPreco', 'line', { labels: lblX, datasets: [ { label: 'Preço (R$)', data: aPrc, borderColor: '#059669', backgroundColor: 'rgba(16, 185, 129, 0.2)', fill: true, spanGaps: true } ] }, { responsive: true, plugins: { legend: { display: false } } });
         }
     }
-
-    // --- MANEJOS E PRONTUÁRIO ---
-    function toggleCriaFields() {
-        const isChecked = document.getElementById('check-registrar-cria').checked;
-        const campos = document.getElementById('campos-cria');
-        if (isChecked) { campos.classList.remove('hidden'); if(cache && cache.dadosFormulario) document.getElementById('brinco-cria').value = cache.dadosFormulario.proximoBrinco; } 
-        else { campos.classList.add('hidden'); document.getElementById('brinco-cria').value = ""; }
-    }
-
-    function mostrarErroValidacao(msg) {
-        document.getElementById('txt-erro-manejo').innerText = msg;
-        document.getElementById('box-erro-manejo').classList.remove('hidden');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    async function salvarManejo(e) {
-        e.preventDefault(); document.getElementById('box-erro-manejo').classList.add('hidden'); 
-        const ev = document.getElementById('evento').value, mainDataStr = document.getElementById('data').value;
-        const info1 = document.getElementById('info1').value, info2 = document.getElementById('info2').value, info3 = document.getElementById('info3').value;
-        let mainBrinco = formatarBrincoUI_internal(document.getElementById('brinco').value);
-        if (!mainBrinco && (ev === "Nascimento" || ev === "Compra") && cache && cache.dadosFormulario) mainBrinco = cache.dadosFormulario.proximoBrinco;
-
-        if (cache && cache.animais) {
-            const animal = cache.animais[mainBrinco], dataEvento = new Date(mainDataStr + "T00:00:00"), dataHoje = new Date(); dataHoje.setHours(0,0,0,0);
-            if (dataEvento > dataHoje) return mostrarErroValidacao("A data do evento não pode ser lançada no futuro.");
-            if (!animal && ev !== "Nascimento" && ev !== "Compra") return mostrarErroValidacao(`O animal ${mainBrinco} não existe. Registre seu Nascimento/Compra primeiro.`);
-            if (animal) {
-                if (animal.descartada && ev !== "Saída" && ev !== "Troca de Brinco") return mostrarErroValidacao("Animal inativo/descartado. Não pode receber novos manejos.");
-                if (animal.descartada && ev === "Saída") return mostrarErroValidacao(`O animal ${mainBrinco} já registrou Saída anteriormente.`);
-                if (animal.nascimento && dataEvento.getTime() < animal.nascimento) return mostrarErroValidacao("A data é anterior ao nascimento do animal.");
-                const evFemea = ["Inseminação", "Parto", "Secagem (Pré-Parto)", "Encerramento Reprodutivo", "Secagem de Descarte", "Vacina B19"];
-                if (evFemea.includes(ev) && animal.sexo !== "F") return mostrarErroValidacao(`O evento '${ev}' é exclusivo para fêmeas.`);
-                if (ev === "Inseminação" && animal.idadeDias < 365) return mostrarErroValidacao(`Inseminação Bloqueada: Esta bezerra possui apenas ${Math.floor(animal.idadeDias/30)} meses.`);
-                if (ev === "Parto") { if (animal.statusRep === "Vazia" && !animal.dtUltimaIA) return mostrarErroValidacao("Parto bloqueado: Não há registro prévio de Inseminação."); if (animal.dtUltimoParto && ((dataEvento.getTime() - animal.dtUltimoParto) / 86400000) < 260) return mostrarErroValidacao(`Intervalo biológico impossível. O último parto foi há menos de 260 dias.`); }
-                if (ev === "Secagem (Pré-Parto)") { if (animal.statusProd !== "Lactando") return mostrarErroValidacao("A vaca não está em lactação. Não pode ser secada."); if (animal.statusRep !== "Prenhe" && animal.statusRep !== "Pendente") return mostrarErroValidacao("Secagem Pré-Parto exige fêmea prenhe (ou IA pendente)."); }
-                if (ev === "Encerramento Reprodutivo" && animal.statusRep !== "Pendente") return mostrarErroValidacao("A fêmea não possui Inseminação pendente para desistir.");
-                if (ev === "Vacina B19" && animal.vacinaB19) return mostrarErroValidacao("Esta bezerra já possui a vacina B19 registada.");
-            }
-            if (ev === "Parto" && document.getElementById('check-registrar-cria').checked) {
-                const bCria = formatarBrincoUI_internal(document.getElementById('brinco-cria').value);
-                if (cache.animais[bCria] && !cache.animais[bCria].descartada) return mostrarErroValidacao(`O brinco sugerido para a cria (${bCria}) já está em uso.`);
-            }
-        }
-
-        const btn = document.getElementById('btn-salvar'); btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>A Gravar...';
-        document.getElementById('loading').classList.remove('hidden'); document.getElementById('txt-loading').innerText = "A Enviar ao Diário...";
-        let eventosEnvio = []; 
-        if (ev === "Parto") {
-            const registrar = document.getElementById('check-registrar-cria').checked;
-            eventosEnvio.push({ brinco: mainBrinco, data: mainDataStr, evento: "Parto", info1: info1, info2: "", info3: "" });
-            if (registrar) {
-                let bC = formatarBrincoUI_internal(document.getElementById('brinco-cria').value || (cache ? cache.dadosFormulario.proximoBrinco : ''));
-                let paiId = (cache && cache.dadosFormulario.historicoIAs[mainBrinco]) || "";
-                eventosEnvio.push({ brinco: bC, data: mainDataStr, evento: "Nascimento", info1: info1, info2: mainBrinco, info3: paiId }, { brinco: bC, data: mainDataStr, evento: "Propriedade", info1: document.getElementById('proprietario-cria').value });
-            }
-        } else { eventosEnvio.push({ brinco: mainBrinco, data: mainDataStr, evento: ev, info1: info1, info2: info2, info3: info3 }); }
-
-        try {
-            const res = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ senha: localStorage.getItem('vaquinhas_pwd') || "", eventos: eventosEnvio }) });
-            const result = await res.json();
-            if(result.status === 'auth_error') { abrirTelaLogin(result.msg); return; }
-            if(result.status === 'sucesso') {
-                alert(result.msg); document.getElementById('formManejo').reset(); document.getElementById('data').valueAsDate = new Date();
-                document.getElementById('check-registrar-cria').checked = false; toggleCriaFields(); atualizarCamposForm();
-                cache = null; carregarDadosForcado(); 
-            } else throw new Error(result.msg);
-        } catch (err) { mostrarErroValidacao("Falha no registo: " + err.message); document.getElementById('loading').classList.add('hidden'); } 
-        finally { btn.disabled = false; btn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Registar Manejo'; }
-    }
-
-    // --- LÓGICA DO PRONTUÁRIO INDIVIDUAL ---
-    function pesquisarProntuario() {
-        const b = formatarBrincoUI_internal(document.getElementById('input-busca-prontuario').value); const res = document.getElementById('resultado-prontuario');
-        if (!cache || !cache.animais || !cache.animais[b]) { res.innerHTML = `<div class="p-4 bg-yellow-50 text-yellow-800 rounded-xl border border-yellow-200 text-center font-bold"><i class="fas fa-search-minus text-2xl block mb-2"></i>O brinco ${b} não possui registos no Diário.</div>`; return; }
-        const animal = cache.animais[b]; const evs = animal.eventos || []; const hoje = new Date(); hoje.setHours(0,0,0,0);
-        let crias = []; for (let k in cache.animais) { let n = (cache.animais[k].eventos||[]).find(e => e.tipo === "nascimento"); if (n && n.info2 === b) crias.push({ brinco: k, sexo: cache.animais[k].sexo, descartada: cache.animais[k].descartada }); }
-        let lactacoes = []; let lactAtual = null;
-        evs.forEach(e => { if (e.tipo === "parto" || e.tipo === "parida") { if (lactAtual) lactacoes.push(lactAtual); lactAtual = { dataParto: new Date(e.data), ias: 0, dataSecagem: null }; } else if (lactAtual) { if (e.tipo === "inseminacao" || e.tipo === "cobertura") lactAtual.ias++; if (e.tipo.includes("secagem") || e.tipo.includes("seca")) { if (!lactAtual.dataSecagem) lactAtual.dataSecagem = new Date(e.data); } } });
-        if (lactAtual) lactacoes.push(lactAtual);
-
-        let statLactHTML = '';
-        if (lactacoes.length > 0) {
-            statLactHTML = `<h4 class="font-black text-[10px] text-gray-500 uppercase tracking-widest mt-6 mb-3"><i class="fas fa-chart-line mr-1"></i> Histórico Produtivo</h4><div class="space-y-3">`;
-            lactacoes.forEach((L, idx) => {
-                let fim = L.dataSecagem ? L.dataSecagem : hoje; let del = Math.floor((fim - L.dataParto) / 86400000); let perSecoHtml = '';
-                if (L.dataSecagem && lactacoes[idx+1]) { let diasSecos = Math.floor((lactacoes[idx+1].dataParto - L.dataSecagem) / 86400000); perSecoHtml = `<span class="bg-orange-100 text-orange-700 px-2 py-1 rounded">Período Seco: ${diasSecos}d</span>`; }
-                statLactHTML += `<div class="bg-gray-50 p-3 rounded-xl border border-gray-200 text-xs font-bold text-gray-600 flex justify-between items-center shadow-sm"><div><span class="text-blue-600 uppercase text-[10px] block mb-0.5">${idx+1}ª Lactação</span>DEL: <span class="text-gray-900">${del} dias</span> &bull; <span class="${L.ias > 2 ? 'text-red-500' : 'text-gray-900'}">${L.ias} IAs</span></div><div class="text-right text-[10px]">${perSecoHtml}</div></div>`;
-            });
-            statLactHTML += `</div>`;
-        }
-
-        let criasHTML = '';
-        if (crias.length > 0) {
-            criasHTML = `<h4 class="font-black text-[10px] text-gray-500 uppercase tracking-widest mt-6 mb-3"><i class="fas fa-sitemap mr-1"></i> Descendência Genética</h4><div class="flex flex-wrap gap-2">`;
-            criasHTML += crias.map(c => `<span class="px-2 py-1.5 text-[10px] font-black rounded uppercase shadow-sm ${c.descartada ? 'bg-gray-200 text-gray-500 border border-gray-300' : (c.sexo==='F'?'bg-pink-100 text-pink-700 border border-pink-200':'bg-blue-100 text-blue-700 border border-blue-200')}"><i class="fas ${c.sexo==='F'?'fa-venus':'fa-mars'} mr-1"></i>${c.brinco} ${c.descartada?'(INATIVO)':''}</span>`).join('');
-            criasHTML += `</div>`;
-        }
-
-        let linhaTempoHTML = `<h4 class="font-black text-[10px] text-gray-500 uppercase tracking-widest mt-6 mb-4"><i class="fas fa-history mr-1"></i> Linha do Tempo</h4><div class="border-l-2 border-green-200 ml-3 pl-4 space-y-4 pb-4">`;
-        [...evs].reverse().forEach(e => { linhaTempoHTML += `<div class="relative"><div class="absolute -left-[23px] w-3 h-3 bg-green-500 border-2 border-white rounded-full mt-1"></div><div class="text-[10px] font-black text-gray-400 mb-0.5">${new Date(e.data).toLocaleDateString('pt-BR', {day:'2-digit',month:'2-digit',year:'numeric'})}</div><div class="font-black text-sm text-gray-800 uppercase tracking-tighter">${e.tipo}</div>${e.info1 || e.info2 || e.info3 ? `<div class="text-xs text-gray-500 mt-1 font-medium bg-gray-50 p-2 rounded-lg inline-block border border-gray-100">${e.info1} ${e.info2} ${e.info3}</div>` : ''}</div>`; });
-        linhaTempoHTML += `</div>`;
-
-        res.innerHTML = `
-            <div class="bg-white p-5 rounded-2xl shadow-md border-t-4 ${animal.descartada ? 'border-gray-500' : 'border-green-600'}">
-                <div class="flex justify-between items-start mb-4 pb-4 border-b border-gray-100">
-                    <div><h3 class="font-black text-3xl text-gray-900 tracking-tighter">${animal.brinco}</h3><div class="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">${animal.descartada ? '<span class="text-red-500">INATIVO</span>' : '<span class="text-green-600">ATIVO</span>'} &bull; ${animal.proprietario}</div></div>
-                    <div class="text-right"><div class="text-xs font-black px-3 py-1 rounded bg-gray-100 mb-1">${animal.nascimento ? getIdadeFormatada(animal.idadeDias) : 'N/A'}</div><div class="text-[10px] font-bold text-gray-400 uppercase"><i class="fas ${animal.sexo==='F'?'fa-venus text-pink-500':'fa-mars text-blue-500'} mr-1"></i>${animal.sexo}</div></div>
-                </div>
-                ${!animal.descartada && animal.sexo === 'F' ? `<div class="grid grid-cols-2 gap-2 mt-2 text-center"><div class="bg-blue-50 border border-blue-100 p-2 rounded-xl"><div class="text-[9px] uppercase font-bold text-gray-500">Reprodutivo</div><div class="font-black text-blue-700 text-sm">${animal.statusRep}</div></div><div class="bg-green-50 border border-green-100 p-2 rounded-xl"><div class="text-[9px] uppercase font-bold text-gray-500">Produtivo</div><div class="font-black text-green-700 text-sm">${animal.statusProd}</div></div></div>` : ''}
-                ${statLactHTML} ${criasHTML} ${linhaTempoHTML}
-            </div>`;
-    }
-
-    function renderDashboard(dono) {
-        if (!cache || !cache.dashboard) return;
-        document.querySelectorAll('.btn-filtro').forEach(b => b.classList.remove('btn-filter-active')); document.getElementById('btn-filtro-' + dono).classList.add('btn-filter-active');
-        const db = cache.dashboard; 
-        const p = (dono !== 'todos') ? db.proprietarios[dono] || { femeas: {}, machos: {} } : Object.values(db.proprietarios).reduce((a,c)=>{ for(let k in a.femeas){ a.femeas[k]+=c.femeas[k]||0; a.machos[k]+=c.machos[k]||0; } return a; }, {femeas:{ate_1:0,de_1_a_2:0,de_2_a_3:0,mais_de_3:0},machos:{ate_1:0,de_1_a_2:0,de_2_a_3:0,mais_de_3:0}});
-        const labels = { ate_1: "Até 1 ano", de_1_a_2: "1 a 2 anos", de_2_a_3: "2 a 3 anos", mais_de_3: "Mais de 3 anos" };
-        document.getElementById('lista-demografia').innerHTML = Object.entries(labels).map(([k,v]) => `<tr class="hover:bg-gray-50"><td class="p-3 font-medium text-xs text-gray-600">${v}</td><td class="p-3 text-center font-black text-green-700">${p.femeas[k]||0}</td><td class="p-3 text-center font-black text-blue-700">${p.machos[k]||0}</td></tr>`).join('');
-        document.getElementById('val-lp').innerText = db.matriz.lactandoPrenhe || 0; document.getElementById('val-lv').innerText = db.matriz.lactandoVazia || 0; document.getElementById('val-sp').innerText = db.matriz.secaPrenhe || 0; document.getElementById('val-sv').innerText = db.matriz.secaVazia || 0; document.getElementById('val-del').innerText = (db.totalLactando > 0 ? Math.round(db.somaDEL / db.totalLactando) : 0) + " DEL Médio";
-    }
-
-    function setFiltroTipo(t) { filtroAcoes.tipo = t; document.querySelectorAll('.btn-acao-tipo').forEach(b => { b.classList.remove('btn-acao-active', 'text-gray-900'); b.classList.add('text-gray-400'); }); document.getElementById('btn-acao-tipo-' + t).classList.add('btn-acao-active', 'text-gray-900'); renderAcoes(); }
-    function setHorizonte(d) { filtroAcoes.horizonteDias = d; document.querySelectorAll('.btn-acao-tempo').forEach(b => { b.classList.remove('btn-acao-active', 'text-gray-900'); b.classList.add('text-gray-400'); }); document.getElementById('btn-acao-tempo-' + (d===null?'null':d)).classList.add('btn-acao-active', 'text-gray-900'); renderAcoes(); }
-    function filtrarPorHorizonte(lista, cd) { if (!filtroAcoes.horizonteDias || lista.length === 0) return lista; let minTime = Math.min(...lista.map(i => new Date(i[cd]).getTime())); let oldest = new Date(minTime); oldest.setHours(0,0,0,0); let limite = new Date(oldest); limite.setDate(limite.getDate() + filtroAcoes.horizonteDias); return lista.filter(i => { const d = new Date(i[cd]); return d <= limite; }); }
-    function toggleBezerros() { mostrarBezerreiros = !mostrarBezerreiros; const btn = document.getElementById('btn-toggle-bezerros'); if (mostrarBezerreiros) { btn.classList.replace('bg-pink-50', 'bg-pink-600'); btn.classList.replace('text-pink-700', 'text-white'); btn.innerHTML = '<i class="fas fa-eye-slash mr-2"></i>Ocultar Aleitamento e B19'; } else { btn.classList.replace('bg-pink-600', 'bg-pink-50'); btn.classList.replace('text-white', 'text-pink-700'); btn.innerHTML = '<i class="fas fa-baby-carriage mr-2"></i>Exibir Aleitamento e B19'; } renderAcoes(); }
-
-    function renderAcoes() {
-        const list = document.getElementById('lista-acoes'); if (!cache) return;
-        try {
-            let h = ''; const card = (t, ic, col, cont) => `<div class="mb-6 bg-white rounded-2xl shadow-sm border-t-4 ${col} overflow-hidden"><div class="bg-gray-50 px-4 py-3 border-b flex items-center justify-between"><h4 class="font-black text-[10px] uppercase tracking-widest text-gray-500"><i class="${ic} mr-2"></i>${t}</h4></div><div class="divide-y divide-gray-100">${cont}</div></div>`;
-            const vB19 = cache.vacinaB19 || []; const alei = cache.aleitamento || []; const part = filtrarPorHorizonte(cache.partos || [], 'data'); const sec = filtrarPorHorizonte(cache.secagem || [], 'data'); const vApt = cache.vacasAptas || []; const nApt = cache.novilhasAptas || [];
-            
-            if (filtroAcoes.tipo === 'todos' || filtroAcoes.tipo === 'secagem') { h += card('Previsão Secagem', 'fas fa-leaf text-orange-600', 'border-orange-500', sec.map(s => `<div class="p-3 flex justify-between items-center hover:bg-gray-50"><span class="font-bold text-lg text-gray-900">${s.brinco}</span><div class="text-orange-600 font-black text-sm"><i class="far fa-calendar-alt mr-1"></i> ${new Date(s.data).toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'})}</div></div>`).join('') || '<p class="p-4 text-center text-gray-400 text-xs italic">Sem eventos no período.</p>'); }
-            if (filtroAcoes.tipo === 'todos' || filtroAcoes.tipo === 'partos') { h += card('Previsão Partos', 'fas fa-baby-carriage text-red-600', 'border-red-600', part.map(p => `<div class="p-3 flex justify-between items-center hover:bg-gray-50"><div><span class="font-bold text-lg text-gray-900">${p.brinco}</span><span class="text-[9px] bg-gray-200 px-2 py-0.5 rounded font-black ml-1">${p.cat}</span></div><div class="text-red-600 font-black text-sm"><i class="far fa-calendar-alt mr-1"></i> ${new Date(p.data).toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'})}</div></div>`).join('') || '<p class="p-4 text-center text-gray-400 text-xs italic">Sem eventos no período.</p>'); }
-            if (filtroAcoes.tipo === 'todos' || filtroAcoes.tipo === 'aptas') {
-                h += card('Vacas Aptas (IA)', 'fas fa-venus-mars text-blue-600', 'border-blue-600', vApt.map(v => { let idS = cache.animais[v.brinco] ? getIdadeFormatada(cache.animais[v.brinco].idadeDias) : 'N/A'; return `<div class="p-3 flex justify-between items-center hover:bg-gray-50"><div><span class="font-bold text-lg">${v.brinco}</span> <span class="text-[9px] font-black text-gray-500 ml-1">(${idS})</span><div class="text-[9px] text-gray-500 font-bold uppercase mt-0.5">Lact: ${v.lact} &bull; DEL: ${v.del}d</div></div><div><span class="text-[10px] px-2 py-1 rounded font-black ${v.tent>2?'bg-red-100 text-red-700':'bg-blue-50 text-blue-600'}">${v.tent}ª Tentativa</span></div></div>`; }).join('') || '<p class="p-4 text-center text-gray-400 text-xs italic">Nenhuma vaca apta.</p>');
-                h += card('Novilhas Aptas (IA)', 'fas fa-venus text-teal-600', 'border-teal-600', nApt.map(n => { let idS = cache.animais[n.brinco] ? getIdadeFormatada(cache.animais[n.brinco].idadeDias) : 'N/A'; return `<div class="p-3 flex justify-between items-center hover:bg-gray-50"><span class="font-bold text-lg">${n.brinco}</span><span class="text-[10px] font-black text-teal-700 bg-teal-50 px-2 py-1 rounded border">${idS}</span></div>`; }).join('') || '<p class="p-4 text-center text-gray-400 text-xs italic">Nenhuma novilha apta.</p>');
-            }
-            if (mostrarBezerreiros) {
-                h += card('Aleitamento', 'fas fa-bottle-water text-pink-600', 'border-pink-600', alei.map(a => `<div class="p-3 flex justify-between items-center hover:bg-gray-50"><div><b class="text-lg text-gray-900">${a.brinco}</b><br><small class="text-gray-400 font-bold uppercase text-[9px]">Fim: ${new Date(a.fim).toLocaleDateString('pt-BR')}</small></div><div class="text-pink-600 font-black px-4 py-1 bg-pink-50 rounded-full text-xs">${a.dieta}</div></div>`).join('') || '<p class="p-4 text-center text-gray-400 text-xs italic">Sem animais no leite.</p>');
-                if (vB19.length > 0) h += card('Vacinas Brucelose (B19)', 'fas fa-syringe text-purple-600', 'border-purple-600', vB19.map(v => `<div class="p-3 flex justify-between items-center hover:bg-gray-50"><span class="font-bold text-lg text-gray-900">${v.brinco}</span><span class="text-xs font-black text-purple-700 bg-purple-50 px-2 py-1 rounded">LIMITE: ${new Date(v.limite).toLocaleDateString('pt-BR')}</span></div>`).join(''));
-            }
-            list.innerHTML = h;
-        } catch (err) { list.innerHTML = `<div class="p-4 bg-red-100 text-red-700 font-bold text-center">Erro Visual</div>`; }
-    }
-
-    function atualizarCamposForm() {
-        document.getElementById('box-erro-manejo').classList.add('hidden');
-        const ev = document.getElementById('evento').value, d1 = document.getElementById('cont-d1'), l1 = document.getElementById('lab-d1'), d2 = document.getElementById('cont-d2'), l2 = document.getElementById('lab-d2'), d3 = document.getElementById('cont-d3'), l3 = document.getElementById('lab-d3'), lBrinco = document.getElementById('lab-brinco'), inInfo1 = document.getElementById('info1'), inBrinco = document.getElementById('brinco');
-        [d1, d2, d3, document.getElementById('bloco-parto-extra')].forEach(c => c.classList.add('hidden'));
-        lBrinco.innerText = "Brinco Principal"; inInfo1.removeAttribute("onblur"); inInfo1.removeAttribute("inputmode"); inInfo1.value = ""; document.getElementById('info2').value = ""; document.getElementById('info3').value = ""; document.getElementById('check-registrar-cria').checked = false; toggleCriaFields();
-
-        switch(ev) {
-            case "Nascimento": configField(l1, d1, "Sexo (F/M)"); configField(l2, d2, "Brinco da Mãe"); configField(l3, d3, "Nome do Pai"); if (cache && cache.dadosFormulario) inBrinco.value = cache.dadosFormulario.proximoBrinco; break;
-            case "Compra": configField(l1, d1, "Sexo (F/M)"); configField(l3, d3, "Proprietário Inicial"); if (cache && cache.dadosFormulario) inBrinco.value = cache.dadosFormulario.proximoBrinco; break;
-            case "Propriedade": configField(l1, d1, "Novo Proprietário"); break;
-            case "Inseminação": configField(l1, d1, "Touro / Sémen"); if (cache && cache.dadosFormulario && cache.dadosFormulario.machoMaisVelho) inInfo1.value = cache.dadosFormulario.machoMaisVelho; break;
-            case "Secagem (Pré-Parto)": case "Secagem de Descarte": configField(l1, d1, "Antibiótico Usado"); break;
-            case "Parto": configField(l1, d1, "Sexo da Cria (F/M)"); document.getElementById('bloco-parto-extra').classList.remove('hidden'); break;
-            case "Saída": configField(l1, d1, "Motivo (Venda/Morte/Consumo)"); break;
-            case "Troca de Brinco": lBrinco.innerText = "Brinco Antigo"; configField(l1, d1, "Novo Número"); inInfo1.setAttribute("onblur", "formatarBrincoUI(this)"); inInfo1.setAttribute("inputmode", "numeric"); break;
-        }
-    }
-    function configField(lab, cont, text) { lab.innerText = text; cont.classList.remove('hidden'); }
 
 </script>
 </body>
