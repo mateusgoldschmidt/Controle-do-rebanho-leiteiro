@@ -129,11 +129,17 @@
                         </select>
                     </div>
                 </div>
+                
                 <div class="flex gap-1 mt-3 pt-3 border-t border-gray-100">
                     <button id="btn-view-tudo" onclick="setViewProd('tudo')" class="btn-view-prod flex-1 py-1.5 text-[9px] font-black uppercase rounded bg-gray-800 text-white">Tudo</button>
                     <button id="btn-view-vol" onclick="setViewProd('vol')" class="btn-view-prod flex-1 py-1.5 text-[9px] font-black uppercase rounded bg-gray-200 text-gray-600">Vol & Preço</button>
                     <button id="btn-view-qual" onclick="setViewProd('qual')" class="btn-view-prod flex-1 py-1.5 text-[9px] font-black uppercase rounded bg-gray-200 text-gray-600">Qualidade</button>
                 </div>
+                
+                <button onclick="sincronizarSmartcoop()" class="w-full mt-3 py-3 bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-600 hover:text-white font-black uppercase text-[10px] tracking-widest rounded-xl shadow-sm transition-colors">
+                    <i class="fas fa-cloud-download-alt mr-2"></i>Importar Dados do Smartcoop
+                </button>
+                
             </div>
 
             <div id="container-graficos-diarios" class="space-y-4">
@@ -898,6 +904,35 @@
             }, { responsive: true, scales: { y: { position: 'left' }, y1: { position: 'right', grid: {drawOnChartArea: false} } } });
 
             drawChart('chartPreco', 'line', { labels: lblX, datasets: [ { label: 'Preço (R$)', data: aPrc, borderColor: '#059669', backgroundColor: 'rgba(16, 185, 129, 0.2)', fill: true, spanGaps: true } ] }, { responsive: true, plugins: { legend: { display: false } } });
+        }
+    }
+// --- SINCRONIZAÇÃO SMARTCOOP ---
+    async function sincronizarSmartcoop() {
+        const senhaStorage = localStorage.getItem('vaquinhas_pwd') || "";
+        document.getElementById('loading').classList.remove('hidden');
+        document.getElementById('txt-loading').innerText = "A Importar (Pode demorar)...";
+
+        try {
+            const payload = { senha: senhaStorage, acao: "sincronizar_smartcoop" };
+            const res = await fetch(API_URL, {
+                method: 'POST',
+                redirect: 'follow',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(payload)
+            }).then(r => r.json());
+
+            if (res.status === 'auth_error') { abrirTelaLogin(res.msg); return; }
+            if (res.status === 'sucesso') {
+                document.getElementById('txt-loading').innerText = "A Atualizar Gráficos...";
+                cacheProducao = null; // Força o download dos dados novos
+                await carregarDadosForcado(senhaStorage);
+                alert(res.msg);
+            } else {
+                throw new Error(res.msg);
+            }
+        } catch (err) {
+            alert("Falha na sincronização: " + err.message);
+            document.getElementById('loading').classList.add('hidden');
         }
     }
 
