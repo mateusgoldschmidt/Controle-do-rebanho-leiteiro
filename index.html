@@ -16,7 +16,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
+
     <style>
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
@@ -27,9 +27,16 @@
         .btn-filter-active { background-color: #f0fdf4; border-color: #22c55e; color: #166534; font-weight: 900; }
         .btn-acao-active { background-color: #f3f4f6; border-color: #9ca3af; color: #111827; box-shadow: inset 0 2px 4px 0 rgb(0 0 0 / 0.05); }
         .btn-prod-active { background-color: #2563eb; border-color: #1d4ed8; color: white; }
-        .foto-perfil { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .foto-perfil { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); cursor: pointer; }
         #preview-foto-container { display: none; margin-top: 10px; text-align: center; }
         #preview-foto { max-width: 100%; max-height: 200px; border-radius: 12px; border: 2px dashed #cbd5e1; margin: 0 auto; object-fit: contain; }
+        
+        .brinco-link { color: #2563eb; cursor: pointer; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 2px; }
+        .brinco-link:hover { color: #1d4ed8; }
+        
+        .tree-node { border: 2px solid #e5e7eb; border-radius: 8px; padding: 8px; text-align: center; background: white; font-weight: 900; font-size: 11px; z-index: 10; position: relative;}
+        .tree-line { width: 2px; height: 20px; background: #cbd5e1; margin: 0 auto; }
+        .tree-h-line { height: 2px; background: #cbd5e1; flex-grow: 1; }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-900 pb-16 font-sans selection:bg-green-200">
@@ -47,7 +54,7 @@
 </div>
 
 <div id="app-content" class="hidden opacity-0 transition-opacity duration-500">
-    
+
     <header class="bg-green-800 text-white p-4 shadow-lg sticky top-0 z-50">
         <div class="flex justify-between items-center max-w-md mx-auto">
             <h1 class="font-black italic text-xl tracking-tighter uppercase">Vaquinhas <span class="text-green-400">v8</span></h1>
@@ -91,6 +98,11 @@
                     <div class="bg-white p-4 text-center border-r"><span class="text-[9px] uppercase font-black text-gray-400">Seca / Prenhe</span><span id="val-sp" class="block text-2xl font-black text-blue-600">0</span></div>
                     <div class="bg-white p-4 text-center"><span class="text-[9px] uppercase font-black text-gray-400">Seca / Vazia</span><span id="val-sv" class="block text-2xl font-black text-red-500">0</span></div>
                 </div>
+            </div>
+            
+            <button onclick="toggleListaDetalhada()" class="w-full mt-4 py-3 bg-gray-800 text-white font-black uppercase text-[10px] tracking-widest rounded-xl shadow-sm"><i class="fas fa-list mr-2"></i>Ver Lista Detalhada do Rebanho</button>
+            <div id="lista-detalhada-container" class="hidden mt-3 bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto">
+                <div id="tabela-detalhada-body"></div>
             </div>
         </section>
 
@@ -226,7 +238,7 @@
                     <div id="cont-d1"><label id="lab-d1" class="block text-[10px] font-black text-gray-400 uppercase mb-1">Touro / Sémen</label><input type="text" id="info1" class="w-full p-3 bg-gray-50 border-2 border-gray-200 rounded-xl font-bold outline-none focus:border-green-500 focus:bg-white transition-colors"></div>
                     <div id="cont-d2" class="hidden"><label id="lab-d2" class="block text-[10px] font-black text-gray-400 uppercase mb-1">Info 2</label><input type="text" id="info2" class="w-full p-3 bg-gray-50 border-2 border-gray-200 rounded-xl font-bold outline-none focus:border-green-500 focus:bg-white transition-colors"></div>
                     <div id="cont-d3" class="hidden"><label id="lab-d3" class="block text-[10px] font-black text-gray-400 uppercase mb-1">Info 3</label><input type="text" id="info3" class="w-full p-3 bg-gray-50 border-2 border-gray-200 rounded-xl font-bold outline-none focus:border-green-500 focus:bg-white transition-colors"></div>
-                    
+
                     <button type="submit" id="btn-salvar" class="w-full bg-green-700 hover:bg-green-800 text-white font-black py-5 rounded-2xl shadow-lg active:transform active:scale-95 transition-all text-xs uppercase tracking-widest mt-4"><i class="fas fa-paper-plane mr-2"></i>Registar Manejo</button>
                 </form>
             </div>
@@ -250,6 +262,20 @@
     </div>
 </div>
 
+<div id="modal-foto" class="hidden fixed inset-0 z-[400] bg-black/90 flex flex-col justify-center items-center p-4 transition-opacity duration-300 opacity-0" onclick="fecharModalFoto()">
+    <button class="absolute top-6 right-6 text-white text-3xl font-black" onclick="fecharModalFoto()">&times;</button>
+    <img id="img-modal-foto" src="" class="max-w-full max-h-[85vh] rounded-lg object-contain shadow-2xl">
+</div>
+
+<div id="modal-genealogia" class="hidden fixed inset-0 z-[400] bg-gray-100 flex flex-col p-4 transition-opacity duration-300 opacity-0">
+    <div class="flex justify-between items-center mb-6 mt-4">
+        <h2 class="text-xl font-black uppercase text-gray-800 tracking-tighter"><i class="fas fa-sitemap text-green-600 mr-2"></i>Genealogia</h2>
+        <button class="w-10 h-10 bg-white rounded-full text-gray-800 shadow text-xl font-black flex items-center justify-center" onclick="fecharGenealogia()">&times;</button>
+    </div>
+    <div id="conteudo-genealogia" class="flex-1 overflow-auto bg-white rounded-3xl shadow-sm p-4 border border-gray-200">
+    </div>
+</div>
+
 <script>
     // --- CREDENCIAIS E APIS ---
     const API_URL = "https://script.google.com/macros/s/AKfycbxxyvefDRTk6H_LsQj4udhXcpC_VSk-0jRl46GJIwgJP2GHBh6cVZLFrlkCDpI-YZ4Q/exec";
@@ -261,8 +287,8 @@
     let filtroAcoes = { tipo: 'todos', horizonteDias: 60 };
     let mostrarBezerreiros = false;
     let graficosAtivos = {};
-    let modoProd = 'mes'; 
-    let viewFiltro = 'tudo'; 
+    let modoProd = 'mes';
+    let viewFiltro = 'tudo';
 
     // --- ARRANQUE E LOGIN ---
     document.addEventListener('DOMContentLoaded', () => {
@@ -275,31 +301,31 @@
         if (savedPwd) { fecharTelaLogin(); carregarDadosForcado(savedPwd); }
     });
 
-    function efetuarLogin(e) { 
-        e.preventDefault(); 
-        const pwd = document.getElementById('input-senha').value; 
-        document.getElementById('btn-login').innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; 
-        localStorage.setItem('vaquinhas_pwd', pwd); 
-        carregarDadosForcado(pwd); 
+    function efetuarLogin(e) {
+        e.preventDefault();
+        const pwd = document.getElementById('input-senha').value;
+        document.getElementById('btn-login').innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        localStorage.setItem('vaquinhas_pwd', pwd);
+        carregarDadosForcado(pwd);
     }
-    
-    function fecharTelaLogin() { 
-        const t = document.getElementById('tela-login'), a = document.getElementById('app-content'); 
-        t.classList.add('opacity-0', 'pointer-events-none'); 
-        setTimeout(() => { t.classList.add('hidden'); a.classList.remove('hidden'); setTimeout(() => a.classList.remove('opacity-0'), 50); }, 300); 
-        switchJanela('inventario'); 
+
+    function fecharTelaLogin() {
+        const t = document.getElementById('tela-login'), a = document.getElementById('app-content');
+        t.classList.add('opacity-0', 'pointer-events-none');
+        setTimeout(() => { t.classList.add('hidden'); a.classList.remove('hidden'); setTimeout(() => a.classList.remove('opacity-0'), 50); }, 300);
+        switchJanela('inventario');
     }
-    
-    function abrirTelaLogin(msgErro = null) { 
-        localStorage.removeItem('vaquinhas_pwd'); 
-        const t = document.getElementById('tela-login'), a = document.getElementById('app-content'); 
-        document.getElementById('input-senha').value = ''; 
-        document.getElementById('btn-login').innerHTML = 'Entrar no Sistema'; 
-        if (msgErro) alert(msgErro); 
-        a.classList.add('hidden', 'opacity-0'); 
-        t.classList.remove('hidden', 'opacity-0', 'pointer-events-none'); 
+
+    function abrirTelaLogin(msgErro = null) {
+        localStorage.removeItem('vaquinhas_pwd');
+        const t = document.getElementById('tela-login'), a = document.getElementById('app-content');
+        document.getElementById('input-senha').value = '';
+        document.getElementById('btn-login').innerHTML = 'Entrar no Sistema';
+        if (msgErro) alert(msgErro);
+        a.classList.add('hidden', 'opacity-0');
+        t.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
     }
-    
+
     function fazerLogout() { abrirTelaLogin(); }
 
     function switchJanela(id) {
@@ -314,66 +340,91 @@
 
     async function carregarDadosForcado(senhaObj) {
         let senha = senhaObj || localStorage.getItem('vaquinhas_pwd') || "";
-        document.getElementById('loading').classList.remove('hidden'); 
+        document.getElementById('loading').classList.remove('hidden');
         document.getElementById('txt-loading').innerText = "A Autenticar...";
         try {
             const [jsonAcoes, jsonProd] = await Promise.all([
                 fetch(API_URL + "?action=relatorioAcoes&senha=" + encodeURIComponent(senha), { redirect: "follow" }).then(r=>r.json()),
                 fetch(API_URL + "?action=relatorioProducao&senha=" + encodeURIComponent(senha), { redirect: "follow" }).then(r=>r.json())
             ]);
-            
+
             if (jsonAcoes.status === 'auth_error') { abrirTelaLogin(jsonAcoes.msg); return; }
             if (jsonAcoes.error || jsonAcoes.status === 'erro') throw new Error(jsonAcoes.msg || jsonAcoes.error);
-            
-            cache = jsonAcoes; 
+
+            cache = jsonAcoes;
             if(!jsonProd.error && jsonProd.status !== 'erro') cacheProducao = jsonProd;
-            
-            fecharTelaLogin(); 
+
+            fecharTelaLogin();
             renderDashboard('todos'); setFiltroTipo('todos'); setHorizonte(60); atualizarCamposForm();
             if(document.getElementById('janela-producao').classList.contains('ativa')) renderGraficosProducao();
-        } catch (e) { 
-            alert("Erro de comunicação com o servidor: " + e.message); 
-            document.getElementById('btn-login').innerHTML = 'Entrar no Sistema'; 
-        } finally { 
-            document.getElementById('loading').classList.add('hidden'); 
+        } catch (e) {
+            alert("Erro de comunicação com o servidor: " + e.message);
+            document.getElementById('btn-login').innerHTML = 'Entrar no Sistema';
+        } finally {
+            document.getElementById('loading').classList.add('hidden');
         }
     }
-    
+
     function carregarDados() { carregarDadosForcado(); }
 
     // --- FUNÇÕES UTILITÁRIAS ---
     function formatarBrincoUI_internal(val) { let n = String(val).replace(/\D/g, ''); return n ? n.padStart(6, '0') : ''; }
     function formatarBrincoUI(input) { input.value = formatarBrincoUI_internal(input.value); }
-    function getIdadeFormatada(idadeDias) { if (!idadeDias || idadeDias >= 9999) return "N/A"; let anos = Math.floor(idadeDias / 365); let meses = Math.floor((idadeDias % 365) / 30); if (anos > 0) return `${anos}a ${meses}m`; return `${meses}m`; }
+    function getIdadeFormatada(idadeDias) { if (!idadeDias || idadeDias >= 9999) return "N/A"; let anos = Math.floor(idadeDias / 365);
+    let meses = Math.floor((idadeDias % 365) / 30); if (anos > 0) return `${anos}a ${meses}m`; return `${meses}m`; }
+
+    // --- NAVEGAÇÃO E MODAIS ---
+    function irParaProntuario(brinco) {
+        fecharGenealogia();
+        switchJanela('prontuario');
+        document.getElementById('input-busca-prontuario').value = brinco;
+        pesquisarProntuario();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function abrirModalFoto(url) {
+        document.getElementById('img-modal-foto').src = url;
+        const m = document.getElementById('modal-foto');
+        m.classList.remove('hidden');
+        setTimeout(() => m.classList.remove('opacity-0'), 10);
+    }
+
+    function fecharModalFoto() {
+        const m = document.getElementById('modal-foto');
+        m.classList.add('opacity-0');
+        setTimeout(() => m.classList.add('hidden'), 300);
+    }
 
     // --- LÓGICA DE VALIDAÇÕES DO FORMULÁRIO (LANÇAR) ---
-    function toggleCriaFields() { 
-        const isChecked = document.getElementById('check-registrar-cria').checked; 
-        const campos = document.getElementById('campos-cria'); 
-        if (isChecked) { 
-            campos.classList.remove('hidden'); 
-            if(cache && cache.dadosFormulario) document.getElementById('brinco-cria').value = cache.dadosFormulario.proximoBrinco; 
-        } else { 
-            campos.classList.add('hidden'); 
-            document.getElementById('brinco-cria').value = ""; 
-        } 
+    function toggleCriaFields() {
+        const isChecked = document.getElementById('check-registrar-cria').checked;
+        const campos = document.getElementById('campos-cria');
+        if (isChecked) {
+            campos.classList.remove('hidden');
+            if(cache && cache.dadosFormulario) document.getElementById('brinco-cria').value = cache.dadosFormulario.proximoBrinco;
+        } else {
+            campos.classList.add('hidden');
+            document.getElementById('brinco-cria').value = "";
+        }
     }
-    
-    function mostrarErroValidacao(msg) { 
-        document.getElementById('txt-erro-manejo').innerText = msg; 
-        document.getElementById('box-erro-manejo').classList.remove('hidden'); 
-        window.scrollTo({ top: 0, behavior: 'smooth' }); 
+
+    function mostrarErroValidacao(msg) {
+        document.getElementById('txt-erro-manejo').innerText = msg;
+        document.getElementById('box-erro-manejo').classList.remove('hidden');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function atualizarCamposForm() {
         document.getElementById('box-erro-manejo').classList.add('hidden');
         const ev = document.getElementById('evento').value, d1 = document.getElementById('cont-d1'), l1 = document.getElementById('lab-d1'), d2 = document.getElementById('cont-d2'), l2 = document.getElementById('lab-d2'), d3 = document.getElementById('cont-d3'), l3 = document.getElementById('lab-d3'), lBrinco = document.getElementById('lab-brinco'), inInfo1 = document.getElementById('info1'), inBrinco = document.getElementById('brinco');
-        
+
         [d1, d2, d3, document.getElementById('bloco-parto-extra'), document.getElementById('bloco-foto')].forEach(c => c.classList.add('hidden'));
-        lBrinco.innerText = "Brinco Principal"; inInfo1.removeAttribute("onblur"); inInfo1.removeAttribute("inputmode"); inInfo1.value = ""; document.getElementById('info2').value = ""; document.getElementById('info3').value = ""; document.getElementById('check-registrar-cria').checked = false; toggleCriaFields(); document.getElementById('input-foto').value = ''; document.getElementById('preview-foto-container').style.display = 'none';
+        lBrinco.innerText = "Brinco Principal"; inInfo1.removeAttribute("onblur"); inInfo1.removeAttribute("inputmode"); inInfo1.value = ""; document.getElementById('info2').value = ""; document.getElementById('info3').value = ""; document.getElementById('check-registrar-cria').checked = false; toggleCriaFields();
+        document.getElementById('input-foto').value = ''; document.getElementById('preview-foto-container').style.display = 'none';
 
         switch(ev) {
-            case "Nascimento": configField(l1, d1, "Sexo (F/M)"); configField(l2, d2, "Brinco da Mãe"); configField(l3, d3, "Nome do Pai"); if (cache && cache.dadosFormulario) inBrinco.value = cache.dadosFormulario.proximoBrinco; break;
+            case "Nascimento": configField(l1, d1, "Sexo (F/M)"); configField(l2, d2, "Brinco da Mãe"); configField(l3, d3, "Nome do Pai");
+            if (cache && cache.dadosFormulario) inBrinco.value = cache.dadosFormulario.proximoBrinco; break;
             case "Compra": configField(l1, d1, "Sexo (F/M)"); configField(l3, d3, "Proprietário Inicial"); if (cache && cache.dadosFormulario) inBrinco.value = cache.dadosFormulario.proximoBrinco; break;
             case "Atualizar Foto": document.getElementById('bloco-foto').classList.remove('hidden'); break;
             case "Propriedade": configField(l1, d1, "Novo Proprietário"); break;
@@ -412,7 +463,7 @@
 
     // --- SALVAR MANEJO ---
     async function salvarManejo(e) {
-        e.preventDefault(); document.getElementById('box-erro-manejo').classList.add('hidden'); 
+        e.preventDefault(); document.getElementById('box-erro-manejo').classList.add('hidden');
         const ev = document.getElementById('evento').value, mainDataStr = document.getElementById('data').value;
         let info1 = document.getElementById('info1').value, info2 = document.getElementById('info2').value, info3 = document.getElementById('info3').value;
         let mainBrincoRaw = document.getElementById('brinco').value;
@@ -430,8 +481,11 @@
                 const evFemea = ["Inseminação", "Parto", "Secagem (Pré-Parto)", "Encerramento Reprodutivo", "Secagem de Descarte", "Vacina B19"];
                 if (evFemea.includes(ev) && animal.sexo !== "F") return mostrarErroValidacao(`O evento '${ev}' é exclusivo para fêmeas.`);
                 if (ev === "Inseminação" && animal.idadeDias < 365) return mostrarErroValidacao(`Inseminação Bloqueada: Esta bezerra possui apenas ${Math.floor(animal.idadeDias/30)} meses.`);
-                if (ev === "Parto") { if (animal.statusRep === "Vazia" && !animal.dtUltimaIA) return mostrarErroValidacao("Parto bloqueado: Não há registo prévio de Inseminação."); if (animal.dtUltimoParto && ((dEv.getTime() - animal.dtUltimoParto) / 86400000) < 260) return mostrarErroValidacao(`Intervalo biológico impossível. O último parto foi há menos de 260 dias.`); }
-                if (ev === "Secagem (Pré-Parto)") { if (animal.statusProd !== "Lactando") return mostrarErroValidacao("A vaca não está em lactação."); if (animal.statusRep !== "Prenhe" && animal.statusRep !== "Pendente") return mostrarErroValidacao("Secagem Pré-Parto exige fêmea prenhe (ou IA pendente)."); }
+                if (ev === "Parto") { if (animal.statusRep === "Vazia" && !animal.dtUltimaIA) return mostrarErroValidacao("Parto bloqueado: Não há registo prévio de Inseminação.");
+                if (animal.dtUltimoParto && ((dEv.getTime() - animal.dtUltimoParto) / 86400000) < 260) return mostrarErroValidacao(`Intervalo biológico impossível. O último parto foi há menos de 260 dias.`);
+                }
+                if (ev === "Secagem (Pré-Parto)") { if (animal.statusProd !== "Lactando") return mostrarErroValidacao("A vaca não está em lactação.");
+                if (animal.statusRep !== "Prenhe" && animal.statusRep !== "Pendente") return mostrarErroValidacao("Secagem Pré-Parto exige fêmea prenhe (ou IA pendente)."); }
                 if (ev === "Encerramento Reprodutivo" && animal.statusRep !== "Pendente") return mostrarErroValidacao("A fêmea não possui Inseminação pendente para desistir.");
                 if (ev === "Vacina B19" && animal.vacinaB19) return mostrarErroValidacao("Esta bezerra já possui a vacina B19 registada.");
                 if (ev === "Atualizar Foto" && !document.getElementById('input-foto').files[0]) return mostrarErroValidacao("Tem de escolher ou tirar uma foto primeiro.");
@@ -443,7 +497,7 @@
         }
 
         const btn = document.getElementById('btn-salvar'); btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>A Gravar...';
-        document.getElementById('loading').classList.remove('hidden'); 
+        document.getElementById('loading').classList.remove('hidden');
 
         // UPLOAD DA FOTO PARA CLOUDINARY ANTES DE ENVIAR PARA A PLANILHA
         if (ev === "Atualizar Foto") {
@@ -451,7 +505,7 @@
             const fotoFile = document.getElementById('input-foto').files[0];
             try {
                 let fotoUrl = await uploadParaCloudinary(fotoFile);
-                info1 = fotoUrl; 
+                info1 = fotoUrl;
             } catch (err) {
                 document.getElementById('loading').classList.add('hidden'); btn.disabled = false; btn.innerHTML = 'Registar Manejo';
                 return mostrarErroValidacao(err.message);
@@ -459,7 +513,7 @@
         }
 
         document.getElementById('txt-loading').innerText = "A Enviar ao Diário...";
-        let eventosEnvio = []; 
+        let eventosEnvio = [];
         if (ev === "Parto") {
             const registrar = document.getElementById('check-registrar-cria').checked;
             eventosEnvio.push({ brinco: mainBrinco, data: mainDataStr, evento: "Parto", info1: info1, info2: "", info3: "" });
@@ -479,22 +533,78 @@
                 alert(res.msg); document.getElementById('formManejo').reset(); document.getElementById('data').valueAsDate = new Date();
                 document.getElementById('check-registrar-cria').checked = false; toggleCriaFields(); atualizarCamposForm();
                 document.getElementById('preview-foto-container').style.display = 'none';
-                cache = null; carregarDadosForcado(localStorage.getItem('vaquinhas_pwd')); 
+                cache = null; carregarDadosForcado(localStorage.getItem('vaquinhas_pwd'));
             } else throw new Error(res.msg);
-        } catch (err) { mostrarErroValidacao("Falha na gravação: " + err.message); document.getElementById('loading').classList.add('hidden'); } 
+        } catch (err) { mostrarErroValidacao("Falha na gravação: " + err.message); document.getElementById('loading').classList.add('hidden'); }
         finally { btn.disabled = false; btn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Registar Manejo'; }
     }
 
-    // --- PRONTUÁRIO INDIVIDUAL (C/ FOTO) ---
+    // --- GENEALOGIA ---
+    function getPais(brinco) {
+        let res = { mae: 'Desconhecida', pai: 'Desconhecido' };
+        if(!cache || !cache.animais || !cache.animais[brinco]) return res;
+        let a = cache.animais[brinco];
+        if(!a.eventos) return res;
+        let nasc = a.eventos.find(e => e.tipo === 'nascimento');
+        if(nasc) {
+            if(nasc.info2) res.mae = nasc.info2;
+            if(nasc.info3) res.pai = nasc.info3;
+        }
+        return res;
+    }
+
+    function abrirGenealogia(brinco) {
+        const m = document.getElementById('modal-genealogia');
+        m.classList.remove('hidden');
+        setTimeout(() => m.classList.remove('opacity-0'), 10);
+
+        let p1 = getPais(brinco);
+        let pMae = getPais(p1.mae);
+
+        let html = `
+            <div class="flex flex-col items-center mt-4">
+                <div class="flex justify-around w-full max-w-sm px-2 mb-1">
+                    <div class="tree-node w-24 bg-pink-50 border-pink-200 text-pink-700">Avó Mat.<br><span class="text-gray-900">${pMae.mae}</span></div>
+                    <div class="tree-node w-24 bg-blue-50 border-blue-200 text-blue-700">Avô Mat.<br><span class="text-gray-900">${pMae.pai}</span></div>
+                    <div class="tree-node w-24 bg-gray-50 text-gray-400">Avó Pat.<br><span class="text-gray-400">N/A</span></div>
+                    <div class="tree-node w-24 bg-gray-50 text-gray-400">Avô Pat.<br><span class="text-gray-400">N/A</span></div>
+                </div>
+                <div class="flex w-full max-w-sm mb-1">
+                    <div class="w-1/2 flex flex-col items-center"><div class="tree-line"></div><div class="flex w-1/2 border-t-2 border-gray-300 h-4"></div></div>
+                    <div class="w-1/2 flex flex-col items-center"><div class="tree-line"></div></div>
+                </div>
+                <div class="flex justify-around w-full max-w-sm px-8 mb-1">
+                    <div class="tree-node w-32 bg-pink-50 border-pink-300 text-pink-800 ${cache.animais[p1.mae] ? 'cursor-pointer underline shadow' : ''}" ${cache.animais[p1.mae] ? `onclick="irParaProntuario('${p1.mae}')"` : ''}>Mãe<br><span class="text-gray-900 text-sm">${p1.mae}</span></div>
+                    <div class="tree-node w-32 bg-blue-50 border-blue-300 text-blue-800">Pai<br><span class="text-gray-900 text-sm">${p1.pai}</span></div>
+                </div>
+                <div class="flex w-full max-w-sm justify-center mb-1">
+                    <div class="w-1/2 flex flex-col items-end"><div class="border-t-2 border-r-2 border-gray-300 w-1/2 h-5 rounded-tr-lg mt-0"></div></div>
+                    <div class="w-1/2 flex flex-col items-start"><div class="border-t-2 border-l-2 border-gray-300 w-1/2 h-5 rounded-tl-lg mt-0"></div></div>
+                </div>
+                <div class="tree-node w-40 border-green-500 bg-green-50 text-green-800 shadow-md">Animal<br><span class="text-gray-900 text-lg">${brinco}</span></div>
+            </div>
+        `;
+        document.getElementById('conteudo-genealogia').innerHTML = html;
+    }
+
+    function fecharGenealogia() {
+        const m = document.getElementById('modal-genealogia');
+        m.classList.add('opacity-0');
+        setTimeout(() => m.classList.add('hidden'), 300);
+    }
+
+    // --- PRONTUÁRIO INDIVIDUAL (C/ FOTO E GENEALOGIA) ---
     function pesquisarProntuario() {
         const b = formatarBrincoUI_internal(document.getElementById('input-busca-prontuario').value); const res = document.getElementById('resultado-prontuario');
-        if (!cache || !cache.animais || !cache.animais[b]) { res.innerHTML = `<div class="p-4 bg-yellow-50 text-yellow-800 rounded-xl border border-yellow-200 text-center font-bold"><i class="fas fa-search-minus text-2xl block mb-2"></i>O brinco ${b} não possui registos no Diário.</div>`; return; }
+        if (!cache || !cache.animais || !cache.animais[b]) { res.innerHTML = `<div class="p-4 bg-yellow-50 text-yellow-800 rounded-xl border border-yellow-200 text-center font-bold"><i class="fas fa-search-minus text-2xl block mb-2"></i>O brinco ${b} não possui registos no Diário.</div>`;
+        return; }
         const animal = cache.animais[b]; const evs = animal.eventos || []; const hoje = new Date(); hoje.setHours(0,0,0,0);
-        
+
         let fotoPerfilUrl = null;
         [...evs].reverse().forEach(e => { if (e.tipo === "atualizar foto" && !fotoPerfilUrl) fotoPerfilUrl = e.info1; });
 
-        let crias = []; for (let k in cache.animais) { let n = (cache.animais[k].eventos||[]).find(e => e.tipo === "nascimento"); if (n && n.info2 === b) crias.push({ brinco: k, sexo: cache.animais[k].sexo, descartada: cache.animais[k].descartada }); }
+        let crias = []; for (let k in cache.animais) { let n = (cache.animais[k].eventos||[]).find(e => e.tipo === "nascimento");
+        if (n && n.info2 === b) crias.push({ brinco: k, sexo: cache.animais[k].sexo, descartada: cache.animais[k].descartada }); }
         let lactacoes = []; let lactAtual = null;
         evs.forEach(e => { if (e.tipo === "parto" || e.tipo === "parida") { if (lactAtual) lactacoes.push(lactAtual); lactAtual = { dataParto: new Date(e.data), ias: 0, dataSecagem: null }; } else if (lactAtual) { if (e.tipo === "inseminacao" || e.tipo === "cobertura") lactAtual.ias++; if (e.tipo.includes("secagem") || e.tipo.includes("seca")) { if (!lactAtual.dataSecagem) lactAtual.dataSecagem = new Date(e.data); } } });
         if (lactAtual) lactacoes.push(lactAtual);
@@ -504,8 +614,10 @@
             statLactHTML = `<h4 class="font-black text-[10px] text-gray-500 uppercase tracking-widest mt-6 mb-3"><i class="fas fa-chart-line mr-1"></i> Histórico Produtivo</h4><div class="space-y-3">`;
             lactacoes.forEach((L, idx) => {
                 let fim = L.dataSecagem ? L.dataSecagem : hoje; let del = Math.floor((fim - L.dataParto) / 86400000); let perSecoHtml = '';
-                if (L.dataSecagem && lactacoes[idx+1]) { let diasSecos = Math.floor((lactacoes[idx+1].dataParto - L.dataSecagem) / 86400000); perSecoHtml = `<span class="bg-orange-100 text-orange-700 px-2 py-1 rounded">Período Seco: ${diasSecos}d</span>`; }
-                statLactHTML += `<div class="bg-gray-50 p-3 rounded-xl border border-gray-200 text-xs font-bold text-gray-600 flex justify-between items-center shadow-sm"><div><span class="text-blue-600 uppercase text-[10px] block mb-0.5">${idx+1}ª Lactação</span>DEL: <span class="text-gray-900">${del} dias</span> &bull; <span class="${L.ias > 2 ? 'text-red-500' : 'text-gray-900'}">${L.ias} IAs</span></div><div class="text-right text-[10px]">${perSecoHtml}</div></div>`;
+                if (L.dataSecagem && lactacoes[idx+1]) { let diasSecos = Math.floor((lactacoes[idx+1].dataParto - L.dataSecagem) / 86400000);
+                perSecoHtml = `<span class="bg-orange-100 text-orange-700 px-2 py-1 rounded">Período Seco: ${diasSecos}d</span>`; }
+                statLactHTML += `<div class="bg-gray-50 p-3 rounded-xl border border-gray-200 text-xs font-bold text-gray-600 flex justify-between items-center shadow-sm"><div><span class="text-blue-600 uppercase text-[10px] block mb-0.5">${idx+1}ª Lactação</span>DEL: <span class="text-gray-900">${del} dias</span> &bull;
+                <span class="${L.ias > 2 ? 'text-red-500' : 'text-gray-900'}">${L.ias} IAs</span></div><div class="text-right text-[10px]">${perSecoHtml}</div></div>`;
             });
             statLactHTML += `</div>`;
         }
@@ -513,18 +625,19 @@
         let criasHTML = '';
         if (crias.length > 0) {
             criasHTML = `<h4 class="font-black text-[10px] text-gray-500 uppercase tracking-widest mt-6 mb-3"><i class="fas fa-sitemap mr-1"></i> Descendência Genética</h4><div class="flex flex-wrap gap-2">`;
-            criasHTML += crias.map(c => `<span class="px-2 py-1.5 text-[10px] font-black rounded uppercase shadow-sm ${c.descartada ? 'bg-gray-200 text-gray-500 border border-gray-300' : (c.sexo==='F'?'bg-pink-100 text-pink-700 border border-pink-200':'bg-blue-100 text-blue-700 border border-blue-200')}"><i class="fas ${c.sexo==='F'?'fa-venus':'fa-mars'} mr-1"></i>${c.brinco} ${c.descartada?'(INATIVO)':''}</span>`).join('');
+            criasHTML += crias.map(c => `<span class="px-2 py-1.5 text-[10px] font-black rounded uppercase shadow-sm ${c.descartada ? 'bg-gray-200 text-gray-500 border border-gray-300' : (c.sexo==='F'?'bg-pink-100 text-pink-700 border border-pink-200':'bg-blue-100 text-blue-700 border border-blue-200')} cursor-pointer hover:opacity-80" onclick="irParaProntuario('${c.brinco}')"><i class="fas ${c.sexo==='F'?'fa-venus':'fa-mars'} mr-1"></i>${c.brinco} ${c.descartada?'(INATIVO)':''}</span>`).join('');
             criasHTML += `</div>`;
         }
 
         let linhaTempoHTML = `<h4 class="font-black text-[10px] text-gray-500 uppercase tracking-widest mt-6 mb-4"><i class="fas fa-history mr-1"></i> Linha do Tempo</h4><div class="border-l-2 border-green-200 ml-3 pl-4 space-y-4 pb-4">`;
         [...evs].reverse().forEach(e => {
             let hideInfo = e.tipo === "atualizar foto" ? true : false;
-            linhaTempoHTML += `<div class="relative"><div class="absolute -left-[23px] w-3 h-3 bg-green-500 border-2 border-white rounded-full mt-1"></div><div class="text-[10px] font-black text-gray-400 mb-0.5">${new Date(e.data).toLocaleDateString('pt-BR', {day:'2-digit',month:'2-digit',year:'numeric'})}</div><div class="font-black text-sm text-gray-800 uppercase tracking-tighter">${e.tipo}</div>${!hideInfo && (e.info1 || e.info2 || e.info3) ? `<div class="text-xs text-gray-500 mt-1 font-medium bg-gray-50 p-2 rounded-lg inline-block border border-gray-100">${e.info1} ${e.info2} ${e.info3}</div>` : ''}</div>`; 
+            linhaTempoHTML += `<div class="relative"><div class="absolute -left-[23px] w-3 h-3 bg-green-500 border-2 border-white rounded-full mt-1"></div><div class="text-[10px] font-black text-gray-400 mb-0.5">${new Date(e.data).toLocaleDateString('pt-BR', {day:'2-digit',month:'2-digit',year:'numeric'})}</div><div class="font-black text-sm text-gray-800 uppercase tracking-tighter">${e.tipo}</div>${!hideInfo && (e.info1 || e.info2 || e.info3) ?
+            `<div class="text-xs text-gray-500 mt-1 font-medium bg-gray-50 p-2 rounded-lg inline-block border border-gray-100">${e.info1} ${e.info2} ${e.info3}</div>` : ''}</div>`;
         });
         linhaTempoHTML += `</div>`;
 
-        let headerFotoHTML = fotoPerfilUrl ? `<img src="${fotoPerfilUrl}" class="foto-perfil float-right ml-4" alt="Foto">` : `<div class="foto-perfil float-right ml-4 flex items-center justify-center bg-gray-200 text-gray-400"><i class="fas fa-cow text-2xl"></i></div>`;
+        let headerFotoHTML = fotoPerfilUrl ? `<img src="${fotoPerfilUrl}" class="foto-perfil float-right ml-4 cursor-pointer" onclick="abrirModalFoto('${fotoPerfilUrl}')" alt="Foto">` : `<div class="foto-perfil float-right ml-4 flex items-center justify-center bg-gray-200 text-gray-400"><i class="fas fa-cow text-2xl"></i></div>`;
 
         res.innerHTML = `
             <div class="bg-white p-5 rounded-2xl shadow-md border-t-4 ${animal.descartada ? 'border-gray-500' : 'border-green-600'}">
@@ -538,6 +651,7 @@
                     </div>
                 </div>
                 ${!animal.descartada && animal.sexo === 'F' ? `<div class="grid grid-cols-2 gap-2 mt-2 text-center"><div class="bg-blue-50 border border-blue-100 p-2 rounded-xl"><div class="text-[9px] uppercase font-bold text-gray-500">Reprodutivo</div><div class="font-black text-blue-700 text-sm">${animal.statusRep}</div></div><div class="bg-green-50 border border-green-100 p-2 rounded-xl"><div class="text-[9px] uppercase font-bold text-gray-500">Produtivo</div><div class="font-black text-green-700 text-sm">${animal.statusProd}</div></div></div>` : ''}
+                <button onclick="abrirGenealogia('${animal.brinco}')" class="mt-4 w-full py-3 bg-gray-800 text-white text-xs font-black uppercase rounded-xl tracking-widest shadow-sm hover:bg-gray-700"><i class="fas fa-project-diagram mr-2"></i>Ver Árvore Genealógica</button>
                 ${statLactHTML}
                 ${criasHTML}
                 ${linhaTempoHTML}
@@ -546,35 +660,76 @@
     }
 
     // --- DASHBOARD INVENTÁRIO ---
+    function toggleListaDetalhada() {
+        const cont = document.getElementById('lista-detalhada-container');
+        cont.classList.toggle('hidden');
+    }
+
+    function atualizarListaDetalhada(dono) {
+        let html = '<table class="w-full text-[10px] text-left whitespace-nowrap"><thead class="bg-gray-50 uppercase text-gray-400"><tr><th class="p-2 border-b">Brinco</th><th class="p-2 border-b">Idade</th><th class="p-2 border-b">Cat.</th><th class="p-2 border-b">Reprod.</th><th class="p-2 border-b">Prod.</th><th class="p-2 border-b text-center">DEL</th></tr></thead><tbody class="divide-y divide-gray-100">';
+        for(let b in cache.animais) {
+            let a = cache.animais[b];
+            if(a.descartada || a.sexo !== 'F') continue;
+            if(dono !== 'todos' && a.proprietario.toLowerCase() !== dono.toLowerCase()) continue;
+            let cat = a.dtUltimoParto ? 'Vaca' : 'Novilha';
+            let del = '-';
+            if(a.statusProd === 'Lactando' && a.dtUltimoParto) {
+                 del = Math.floor((new Date() - new Date(a.dtUltimoParto)) / 86400000);
+            }
+            html += `<tr class="hover:bg-gray-50"><td class="p-2 font-black brinco-link" onclick="irParaProntuario('${b}')">${b}</td><td class="p-2 text-gray-600">${getIdadeFormatada(a.idadeDias)}</td><td class="p-2 text-gray-600 font-bold">${cat}</td><td class="p-2 text-gray-600">${a.statusRep}</td><td class="p-2 text-gray-600">${a.statusProd}</td><td class="p-2 font-black text-center text-gray-800">${del}</td></tr>`;
+        }
+        html += '</tbody></table>';
+        document.getElementById('tabela-detalhada-body').innerHTML = html;
+    }
+
     function renderDashboard(dono) {
         if (!cache || !cache.dashboard) return;
         document.querySelectorAll('.btn-filtro').forEach(b => b.classList.remove('btn-filter-active')); document.getElementById('btn-filtro-' + dono).classList.add('btn-filter-active');
-        const db = cache.dashboard; const p = (dono !== 'todos') ? db.proprietarios[dono] || { femeas: {}, machos: {} } : Object.values(db.proprietarios).reduce((a,c)=>{ for(let k in a.femeas){ a.femeas[k]+=c.femeas[k]||0; a.machos[k]+=c.machos[k]||0; } return a; }, {femeas:{ate_1:0,de_1_a_2:0,de_2_a_3:0,mais_de_3:0},machos:{ate_1:0,de_1_a_2:0,de_2_a_3:0,mais_de_3:0}});
+        const db = cache.dashboard; const p = (dono !== 'todos') ? db.proprietarios[dono] ||
+        { femeas: {}, machos: {} } : Object.values(db.proprietarios).reduce((a,c)=>{ for(let k in a.femeas){ a.femeas[k]+=c.femeas[k]||0; a.machos[k]+=c.machos[k]||0; } return a; }, {femeas:{ate_1:0,de_1_a_2:0,de_2_a_3:0,mais_de_3:0},machos:{ate_1:0,de_1_a_2:0,de_2_a_3:0,mais_de_3:0}});
         document.getElementById('lista-demografia').innerHTML = Object.entries({ ate_1: "Até 1 ano", de_1_a_2: "1 a 2 anos", de_2_a_3: "2 a 3 anos", mais_de_3: "Mais de 3 anos" }).map(([k,v]) => `<tr class="hover:bg-gray-50"><td class="p-3 font-medium text-xs text-gray-600">${v}</td><td class="p-3 text-center font-black text-green-700">${p.femeas[k]||0}</td><td class="p-3 text-center font-black text-blue-700">${p.machos[k]||0}</td></tr>`).join('');
-        document.getElementById('val-lp').innerText = db.matriz.lactandoPrenhe || 0; document.getElementById('val-lv').innerText = db.matriz.lactandoVazia || 0; document.getElementById('val-sp').innerText = db.matriz.secaPrenhe || 0; document.getElementById('val-sv').innerText = db.matriz.secaVazia || 0; document.getElementById('val-del').innerText = (db.totalLactando > 0 ? Math.round(db.somaDEL / db.totalLactando) : 0) + " DEL Médio";
+        document.getElementById('val-lp').innerText = db.matriz.lactandoPrenhe || 0; document.getElementById('val-lv').innerText = db.matriz.lactandoVazia || 0; document.getElementById('val-sp').innerText = db.matriz.secaPrenhe || 0; document.getElementById('val-sv').innerText = db.matriz.secaVazia || 0;
+        document.getElementById('val-del').innerText = (db.totalLactando > 0 ? Math.round(db.somaDEL / db.totalLactando) : 0) + " DEL Médio";
+        atualizarListaDetalhada(dono);
     }
 
     // --- LISTA DE AÇÕES ---
     function setFiltroTipo(t) { filtroAcoes.tipo = t; document.querySelectorAll('.btn-acao-tipo').forEach(b => { b.classList.remove('btn-acao-active', 'text-gray-900'); b.classList.add('text-gray-400'); }); document.getElementById('btn-acao-tipo-' + t).classList.add('btn-acao-active', 'text-gray-900'); renderAcoes(); }
     function setHorizonte(d) { filtroAcoes.horizonteDias = d; document.querySelectorAll('.btn-acao-tempo').forEach(b => { b.classList.remove('btn-acao-active', 'text-gray-900'); b.classList.add('text-gray-400'); }); document.getElementById('btn-acao-tempo-' + (d===null?'null':d)).classList.add('btn-acao-active', 'text-gray-900'); renderAcoes(); }
-    function filtrarPorHorizonte(lista, cd) { if (!filtroAcoes.horizonteDias || lista.length === 0) return lista; let minTime = Math.min(...lista.map(i => new Date(i[cd]).getTime())); let oldest = new Date(minTime); oldest.setHours(0,0,0,0); let limite = new Date(oldest); limite.setDate(limite.getDate() + filtroAcoes.horizonteDias); return lista.filter(i => { const d = new Date(i[cd]); return d <= limite; }); }
-    function toggleBezerros() { mostrarBezerreiros = !mostrarBezerreiros; const btn = document.getElementById('btn-toggle-bezerros'); if (mostrarBezerreiros) { btn.classList.replace('bg-pink-50', 'bg-pink-600'); btn.classList.replace('text-pink-700', 'text-white'); btn.innerHTML = '<i class="fas fa-eye-slash mr-2"></i>Ocultar Aleitamento e B19'; } else { btn.classList.replace('bg-pink-600', 'bg-pink-50'); btn.classList.replace('text-white', 'text-pink-700'); btn.innerHTML = '<i class="fas fa-baby-carriage mr-2"></i>Exibir Aleitamento e B19'; } renderAcoes(); }
+    function filtrarPorHorizonte(lista, cd) { if (!filtroAcoes.horizonteDias || lista.length === 0) return lista; let minTime = Math.min(...lista.map(i => new Date(i[cd]).getTime()));
+    let oldest = new Date(minTime); oldest.setHours(0,0,0,0); let limite = new Date(oldest); limite.setDate(limite.getDate() + filtroAcoes.horizonteDias);
+    return lista.filter(i => { const d = new Date(i[cd]); return d <= limite; }); }
+    function toggleBezerros() { mostrarBezerreiros = !mostrarBezerreiros; const btn = document.getElementById('btn-toggle-bezerros'); if (mostrarBezerreiros) { btn.classList.replace('bg-pink-50', 'bg-pink-600'); btn.classList.replace('text-pink-700', 'text-white');
+    btn.innerHTML = '<i class="fas fa-eye-slash mr-2"></i>Ocultar Aleitamento e B19'; } else { btn.classList.replace('bg-pink-600', 'bg-pink-50'); btn.classList.replace('text-white', 'text-pink-700');
+    btn.innerHTML = '<i class="fas fa-baby-carriage mr-2"></i>Exibir Aleitamento e B19'; } renderAcoes(); }
 
     function renderAcoes() {
         const list = document.getElementById('lista-acoes'); if (!cache) return;
         try {
             let h = ''; const card = (t, ic, col, cont) => `<div class="mb-6 bg-white rounded-2xl shadow-sm border-t-4 ${col} overflow-hidden"><div class="bg-gray-50 px-4 py-3 border-b flex items-center justify-between"><h4 class="font-black text-[10px] uppercase tracking-widest text-gray-500"><i class="${ic} mr-2"></i>${t}</h4></div><div class="divide-y divide-gray-100">${cont}</div></div>`;
-            const vB19 = cache.vacinaB19 || []; const alei = cache.aleitamento || []; const part = filtrarPorHorizonte(cache.partos || [], 'data'); const sec = filtrarPorHorizonte(cache.secagem || [], 'data'); const vApt = cache.vacasAptas || []; const nApt = cache.novilhasAptas || [];
-            
-            if (filtroAcoes.tipo === 'todos' || filtroAcoes.tipo === 'secagem') { h += card('Previsão Secagem', 'fas fa-leaf text-orange-600', 'border-orange-500', sec.map(s => `<div class="p-3 flex justify-between items-center hover:bg-gray-50"><span class="font-bold text-lg text-gray-900">${s.brinco}</span><div class="text-orange-600 font-black text-sm"><i class="far fa-calendar-alt mr-1"></i> ${new Date(s.data).toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'})}</div></div>`).join('') || '<p class="p-4 text-center text-gray-400 text-xs italic">Sem eventos no período.</p>'); }
-            if (filtroAcoes.tipo === 'todos' || filtroAcoes.tipo === 'partos') { h += card('Previsão Partos', 'fas fa-baby-carriage text-red-600', 'border-red-600', part.map(p => `<div class="p-3 flex justify-between items-center hover:bg-gray-50"><div><span class="font-bold text-lg text-gray-900">${p.brinco}</span><span class="text-[9px] bg-gray-200 px-2 py-0.5 rounded font-black ml-1">${p.cat}</span></div><div class="text-red-600 font-black text-sm"><i class="far fa-calendar-alt mr-1"></i> ${new Date(p.data).toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'})}</div></div>`).join('') || '<p class="p-4 text-center text-gray-400 text-xs italic">Sem eventos no período.</p>'); }
+            const vB19 = cache.vacinaB19 || []; const alei = cache.aleitamento || []; const part = filtrarPorHorizonte(cache.partos || [], 'data');
+            const sec = filtrarPorHorizonte(cache.secagem || [], 'data'); const vApt = cache.vacasAptas || []; const nApt = cache.novilhasAptas || [];
+
+            if (filtroAcoes.tipo === 'todos' || filtroAcoes.tipo === 'secagem') { h += card('Previsão Secagem', 'fas fa-leaf text-orange-600', 'border-orange-500', sec.map(s => `<div class="p-3 flex justify-between items-center hover:bg-gray-50"><span class="font-bold text-lg brinco-link" onclick="irParaProntuario('${s.brinco}')">${s.brinco}</span><div class="text-orange-600 font-black text-sm"><i class="far fa-calendar-alt mr-1"></i> ${new Date(s.data).toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'})}</div></div>`).join('') || '<p class="p-4 text-center text-gray-400 text-xs italic">Sem eventos no período.</p>');
+            }
+            if (filtroAcoes.tipo === 'todos' || filtroAcoes.tipo === 'partos') { 
+                h += card('Previsão Partos', 'fas fa-baby-carriage text-red-600', 'border-red-600', part.map(p => {
+                    let antibio = '';
+                    let a = cache.animais[p.brinco];
+                    if (a && a.eventos) {
+                        let ultSeca = [...a.eventos].reverse().find(e => e.tipo === 'secagem (pre-parto)');
+                        if (ultSeca && ultSeca.info1) antibio = `<div class="text-[9px] text-orange-500 font-black uppercase mt-1"><i class="fas fa-pills text-orange-400 mr-1"></i>${ultSeca.info1}</div>`;
+                    }
+                    return `<div class="p-3 flex justify-between items-center hover:bg-gray-50"><div><span class="font-bold text-lg brinco-link" onclick="irParaProntuario('${p.brinco}')">${p.brinco}</span><span class="text-[9px] bg-gray-200 px-2 py-0.5 rounded font-black ml-1">${p.cat}</span>${antibio}</div><div class="text-red-600 font-black text-sm"><i class="far fa-calendar-alt mr-1"></i> ${new Date(p.data).toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'})}</div></div>`;
+                }).join('') || '<p class="p-4 text-center text-gray-400 text-xs italic">Sem eventos no período.</p>');
+            }
             if (filtroAcoes.tipo === 'todos' || filtroAcoes.tipo === 'aptas') {
-                h += card('Vacas Aptas (IA)', 'fas fa-venus-mars text-blue-600', 'border-blue-600', vApt.map(v => { let idS = cache.animais[v.brinco] ? getIdadeFormatada(cache.animais[v.brinco].idadeDias) : 'N/A'; return `<div class="p-3 flex justify-between items-center hover:bg-gray-50"><div><span class="font-bold text-lg">${v.brinco}</span> <span class="text-[9px] font-black text-gray-500 ml-1">(${idS})</span><div class="text-[9px] text-gray-500 font-bold uppercase mt-0.5">Lact: ${v.lact} &bull; DEL: ${v.del}d</div></div><div><span class="text-[10px] px-2 py-1 rounded font-black ${v.tent>2?'bg-red-100 text-red-700':'bg-blue-50 text-blue-600'}">${v.tent}ª Tentativa</span></div></div>`; }).join('') || '<p class="p-4 text-center text-gray-400 text-xs italic">Nenhuma vaca apta.</p>');
-                h += card('Novilhas Aptas (IA)', 'fas fa-venus text-teal-600', 'border-teal-600', nApt.map(n => { let idS = cache.animais[n.brinco] ? getIdadeFormatada(cache.animais[n.brinco].idadeDias) : 'N/A'; return `<div class="p-3 flex justify-between items-center hover:bg-gray-50"><span class="font-bold text-lg">${n.brinco}</span><span class="text-[10px] font-black text-teal-700 bg-teal-50 px-2 py-1 rounded border">${idS}</span></div>`; }).join('') || '<p class="p-4 text-center text-gray-400 text-xs italic">Nenhuma novilha apta.</p>');
+                h += card('Vacas Aptas (IA)', 'fas fa-venus-mars text-blue-600', 'border-blue-600', vApt.map(v => { let idS = cache.animais[v.brinco] ? getIdadeFormatada(cache.animais[v.brinco].idadeDias) : 'N/A'; return `<div class="p-3 flex justify-between items-center hover:bg-gray-50"><div><span class="font-bold text-lg brinco-link" onclick="irParaProntuario('${v.brinco}')">${v.brinco}</span> <span class="text-[9px] font-black text-gray-500 ml-1">(${idS})</span><div class="text-[9px] text-gray-500 font-bold uppercase mt-0.5">Lact: ${v.lact} &bull; DEL: ${v.del}d</div></div><div><span class="text-[10px] px-2 py-1 rounded font-black ${v.tent>2?'bg-red-100 text-red-700':'bg-blue-50 text-blue-600'}">${v.tent}ª Tentativa</span></div></div>`; }).join('') || '<p class="p-4 text-center text-gray-400 text-xs italic">Nenhuma vaca apta.</p>');
+                h += card('Novilhas Aptas (IA)', 'fas fa-venus text-teal-600', 'border-teal-600', nApt.map(n => { let idS = cache.animais[n.brinco] ? getIdadeFormatada(cache.animais[n.brinco].idadeDias) : 'N/A'; return `<div class="p-3 flex justify-between items-center hover:bg-gray-50"><span class="font-bold text-lg brinco-link" onclick="irParaProntuario('${n.brinco}')">${n.brinco}</span><span class="text-[10px] font-black text-teal-700 bg-teal-50 px-2 py-1 rounded border">${idS}</span></div>`; }).join('') || '<p class="p-4 text-center text-gray-400 text-xs italic">Nenhuma novilha apta.</p>');
             }
             if (mostrarBezerreiros) {
-                h += card('Aleitamento', 'fas fa-bottle-water text-pink-600', 'border-pink-600', alei.map(a => `<div class="p-3 flex justify-between items-center hover:bg-gray-50"><div><b class="text-lg text-gray-900">${a.brinco}</b><br><small class="text-gray-400 font-bold uppercase text-[9px]">Fim: ${new Date(a.fim).toLocaleDateString('pt-BR')}</small></div><div class="text-pink-600 font-black px-4 py-1 bg-pink-50 rounded-full text-xs">${a.dieta}</div></div>`).join('') || '<p class="p-4 text-center text-gray-400 text-xs italic">Sem animais no leite.</p>');
-                if (vB19.length > 0) h += card('Vacinas Brucelose (B19)', 'fas fa-syringe text-purple-600', 'border-purple-600', vB19.map(v => `<div class="p-3 flex justify-between items-center hover:bg-gray-50"><span class="font-bold text-lg text-gray-900">${v.brinco}</span><span class="text-xs font-black text-purple-700 bg-purple-50 px-2 py-1 rounded">LIMITE: ${new Date(v.limite).toLocaleDateString('pt-BR')}</span></div>`).join(''));
+                h += card('Aleitamento', 'fas fa-bottle-water text-pink-600', 'border-pink-600', alei.map(a => `<div class="p-3 flex justify-between items-center hover:bg-gray-50"><div><b class="text-lg brinco-link" onclick="irParaProntuario('${a.brinco}')">${a.brinco}</b><br><small class="text-gray-400 font-bold uppercase text-[9px]">Fim: ${new Date(a.fim).toLocaleDateString('pt-BR')}</small></div><div class="text-pink-600 font-black px-4 py-1 bg-pink-50 rounded-full text-xs">${a.dieta}</div></div>`).join('') || '<p class="p-4 text-center text-gray-400 text-xs italic">Sem animais no leite.</p>');
+                if (vB19.length > 0) h += card('Vacinas Brucelose (B19)', 'fas fa-syringe text-purple-600', 'border-purple-600', vB19.map(v => `<div class="p-3 flex justify-between items-center hover:bg-gray-50"><span class="font-bold text-lg brinco-link" onclick="irParaProntuario('${v.brinco}')">${v.brinco}</span><span class="text-xs font-black text-purple-700 bg-purple-50 px-2 py-1 rounded">LIMITE: ${new Date(v.limite).toLocaleDateString('pt-BR')}</span></div>`).join(''));
             }
             list.innerHTML = h;
         } catch (err) { list.innerHTML = `<div class="p-4 bg-red-100 text-red-700 font-bold text-center">Erro Visual</div>`; }
@@ -586,10 +741,10 @@
         document.querySelectorAll('.btn-prod').forEach(b => { b.classList.remove('bg-blue-50', 'text-blue-600', 'border-blue-200'); b.classList.add('text-gray-400'); });
         const atv = document.getElementById('btn-prod-'+m);
         atv.classList.remove('text-gray-400'); atv.classList.add('bg-blue-50', 'text-blue-600', 'border-blue-200');
-        
+
         document.getElementById('wrap-filtro-mes').style.display = (m === 'mes') ? 'block' : 'none';
         document.getElementById('wrap-filtro-ano').style.display = (m === '12m') ? 'none' : 'block';
-        
+
         document.getElementById('container-graficos-diarios').style.display = (m === 'mes') ? 'block' : 'none';
         document.getElementById('container-graficos-mensais').style.display = (m !== 'mes') ? 'block' : 'none';
         renderGraficosProducao();
@@ -599,7 +754,7 @@
         viewFiltro = v;
         document.querySelectorAll('.btn-view-prod').forEach(b => { b.classList.remove('bg-gray-800', 'text-white'); b.classList.add('bg-gray-200', 'text-gray-600'); });
         document.getElementById('btn-view-'+v).classList.remove('bg-gray-200', 'text-gray-600'); document.getElementById('btn-view-'+v).classList.add('bg-gray-800', 'text-white');
-        
+
         document.querySelectorAll('.view-vol').forEach(el => el.style.display = (v==='tudo' || v==='vol') ? 'block' : 'none');
         document.querySelectorAll('.view-qual').forEach(el => el.style.display = (v==='tudo' || v==='qual') ? 'block' : 'none');
     }
@@ -614,37 +769,37 @@
         if (!cacheProducao) return;
 
         let selMes = parseInt(document.getElementById('filtro-prod-mes').value);
-        let selAnoStr = document.getElementById('filtro-prod-ano').value; 
+        let selAnoStr = document.getElementById('filtro-prod-ano').value;
         let selAnoNum = parseInt(selAnoStr);
-        let hoje = new Date(); let limite12M = new Date(hoje.getFullYear(), hoje.getMonth() - 11, 1); 
+        let hoje = new Date(); let limite12M = new Date(hoje.getFullYear(), hoje.getMonth() - 11, 1);
 
-        let lblX = []; let dCoop = [], dBez = [], dLact = []; let agrupMes = {}; 
-        
+        let lblX = []; let dCoop = [], dBez = [], dLact = []; let agrupMes = {};
+
         if (modoProd === 'mes') {
             let diasNoMes = new Date(selAnoNum, selMes, 0).getDate();
             for(let i=1; i<=diasNoMes; i++) { lblX.push(i); dCoop.push(0); dBez.push(0); dLact.push(0); }
-            
+
             cacheProducao.volume.forEach(v => {
                 let d = new Date(v.data); let anoLog = d.getFullYear(), mesLog = d.getMonth() + 1, diaLog = d.getDate();
                 if (anoLog === selAnoNum && mesLog === selMes) {
-                    dCoop[diaLog - 1] += v.coop; dBez[diaLog - 1] += v.bez; dLact[diaLog - 1] = v.lact; 
+                    dCoop[diaLog - 1] += v.coop; dBez[diaLog - 1] += v.bez; dLact[diaLog - 1] = v.lact;
                 }
             });
 
             for (let i = 0; i < dCoop.length; i++) {
-                if (dCoop[i] === 0 && dLact[i] > 0) { 
+                if (dCoop[i] === 0 && dLact[i] > 0) {
                     let nextIdx = -1;
                     for (let j = i + 1; j < dCoop.length; j++) { if (dCoop[j] > 0) { nextIdx = j; break; } }
                     if (nextIdx !== -1) {
                         let gapLength = nextIdx - i + 1; let distributedVol = dCoop[nextIdx] / gapLength;
                         for (let k = i; k <= nextIdx; k++) dCoop[k] = distributedVol;
-                        i = nextIdx; 
+                        i = nextIdx;
                     }
                 }
             }
 
             let dLvaca = dLact.map((vacas, i) => vacas > 0 ? ((dCoop[i]+dBez[i])/vacas).toFixed(1) : null);
-            
+
             drawChart('chartProdDiaria', 'bar', {
                 labels: lblX, datasets: [ { label: 'Coop. (L)', data: dCoop, backgroundColor: '#3b82f6' }, { label: 'Vitelos (L)', data: dBez, backgroundColor: '#f59e0b' } ]
             }, { responsive: true, scales: { x: { stacked: true }, y: { stacked: true } } });
@@ -673,7 +828,7 @@
             });
             if (!hasQualData) tbodyHtml = `<tr><td colspan="7" class="p-4 text-center text-gray-400 italic">Sem análises de qualidade registadas neste mês.</td></tr>`;
             document.getElementById('tbody-qualidade-diaria').innerHTML = tbodyHtml;
-        } 
+        }
         else {
             if (modoProd === '12m') {
                 let m = new Date(limite12M);
@@ -687,7 +842,7 @@
             cacheProducao.volume.forEach(v => {
                 let d = new Date(v.data); let k = `${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
                 if (agrupMes[k] !== undefined) {
-                    agrupMes[k].coop += v.coop; agrupMes[k].bez += v.bez; agrupMes[k].somaLact += v.lact; 
+                    agrupMes[k].coop += v.coop; agrupMes[k].bez += v.bez; agrupMes[k].somaLact += v.lact;
                     agrupMes[k].volTotalDias += (v.coop + v.bez); agrupMes[k].diasC++;
                 }
             });
@@ -725,9 +880,9 @@
 
             drawChart('chartProdMensal', 'bar', { labels: lblX, datasets: [ { label: 'Venda (L)', data: aCoop, backgroundColor: '#6366f1' }, { label: 'Vitelos (L)', data: aBez, backgroundColor: '#fb923c' } ] }, { responsive: true, scales: { x: { stacked: true }, y: { stacked: true } } });
             drawChart('chartLvacaMensal', 'line', { labels: lblX, datasets: [ { label: 'Média L/Vaca', data: aLv, borderColor: '#10b981', spanGaps: true, tension: 0.3 } ] }, { responsive: true, plugins: { legend: { display: false } } });
-            
+
             drawChart('chartSolidos', 'line', {
-                labels: lblX, datasets: [ 
+                labels: lblX, datasets: [
                     { label: 'Gordura (%)', data: aGord, borderColor: '#f59e0b', spanGaps: true },
                     { label: 'Proteína (%)', data: aProt, borderColor: '#ec4899', spanGaps: true },
                     { label: 'Lactose (%)', data: aLact, borderColor: '#06b6d4', spanGaps: true }
@@ -735,7 +890,7 @@
             }, { responsive: true });
 
             drawChart('chartSaude', 'line', {
-                labels: lblX, datasets: [ 
+                labels: lblX, datasets: [
                     { label: 'CCS', data: aCcs, borderColor: '#ef4444', yAxisID: 'y', spanGaps: true },
                     { label: 'CTB', data: aCtb, borderColor: '#8b5cf6', yAxisID: 'y', borderDash: [5,5], spanGaps: true },
                     { label: 'NUL (Dir)', data: aNul, borderColor: '#64748b', yAxisID: 'y1', spanGaps: true }
