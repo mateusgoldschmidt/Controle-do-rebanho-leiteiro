@@ -100,9 +100,17 @@
                 </div>
             </div>
             
-            <button onclick="toggleListaDetalhada()" class="w-full mt-4 py-3 bg-gray-800 text-white font-black uppercase text-[10px] tracking-widest rounded-xl shadow-sm"><i class="fas fa-list mr-2"></i>Ver Lista Detalhada do Rebanho</button>
+<div class="flex gap-2 mt-4">
+                <button onclick="toggleListaDetalhada()" class="flex-1 py-3 bg-gray-800 text-white font-black uppercase text-[10px] tracking-widest rounded-xl shadow-sm"><i class="fas fa-list mr-2"></i>Ativos</button>
+                <button onclick="toggleListaDescartados()" class="flex-1 py-3 bg-red-50 text-red-700 border border-red-200 font-black uppercase text-[10px] tracking-widest rounded-xl shadow-sm hover:bg-red-100 transition"><i class="fas fa-times-circle mr-2"></i>Descartados</button>
+            </div>
+            
             <div id="lista-detalhada-container" class="hidden mt-3 bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto">
                 <div id="tabela-detalhada-body"></div>
+            </div>
+
+            <div id="lista-descartados-container" class="hidden mt-3 bg-white rounded-xl shadow-sm border border-red-200 overflow-x-auto">
+                <div id="tabela-descartados-body"></div>
             </div>
         </section>
 
@@ -665,27 +673,82 @@
         `;
     }
 
-    // --- DASHBOARD INVENTÁRIO ---
+// --- DASHBOARD INVENTÁRIO ---
     function toggleListaDetalhada() {
-        const cont = document.getElementById('lista-detalhada-container');
-        cont.classList.toggle('hidden');
+        document.getElementById('lista-detalhada-container').classList.toggle('hidden');
+        document.getElementById('lista-descartados-container').classList.add('hidden');
+    }
+
+    function toggleListaDescartados() {
+        document.getElementById('lista-descartados-container').classList.toggle('hidden');
+        document.getElementById('lista-detalhada-container').classList.add('hidden');
     }
 
     function atualizarListaDetalhada(dono) {
-        let html = '<table class="w-full text-[10px] text-left whitespace-nowrap"><thead class="bg-gray-50 uppercase text-gray-400"><tr><th class="p-2 border-b">Brinco</th><th class="p-2 border-b">Idade</th><th class="p-2 border-b">Cat.</th><th class="p-2 border-b">Reprod.</th><th class="p-2 border-b">Prod.</th><th class="p-2 border-b text-center">DEL</th></tr></thead><tbody class="divide-y divide-gray-100">';
+        let html = '<table class="w-full text-[10px] text-left whitespace-nowrap"><thead class="bg-gray-50 uppercase text-gray-400"><tr><th class="p-2 border-b">Brinco</th><th class="p-2 border-b">Idade ▼</th><th class="p-2 border-b">Cat.</th><th class="p-2 border-b">Reprod.</th><th class="p-2 border-b">Prod.</th><th class="p-2 border-b text-center">DEL</th></tr></thead><tbody class="divide-y divide-gray-100">';
+        
+        let ativos = [];
         for(let b in cache.animais) {
             let a = cache.animais[b];
             if(a.descartada || a.sexo !== 'F') continue;
             if(dono !== 'todos' && a.proprietario.toLowerCase() !== dono.toLowerCase()) continue;
+            ativos.push(a);
+        }
+        
+        // Ordenar ativos por idade (do mais velho para o mais novo)
+        ativos.sort((a, b) => b.idadeDias - a.idadeDias);
+
+        ativos.forEach(a => {
             let cat = a.dtUltimoParto ? 'Vaca' : 'Novilha';
             let del = '-';
             if(a.statusProd === 'Lactando' && a.dtUltimoParto) {
                  del = Math.floor((new Date() - new Date(a.dtUltimoParto)) / 86400000);
             }
-            html += `<tr class="hover:bg-gray-50"><td class="p-2 font-black brinco-link" onclick="irParaProntuario('${b}')">${b}</td><td class="p-2 text-gray-600">${getIdadeFormatada(a.idadeDias)}</td><td class="p-2 text-gray-600 font-bold">${cat}</td><td class="p-2 text-gray-600">${a.statusRep}</td><td class="p-2 text-gray-600">${a.statusProd}</td><td class="p-2 font-black text-center text-gray-800">${del}</td></tr>`;
-        }
+            html += `<tr class="hover:bg-gray-50"><td class="p-2 font-black brinco-link" onclick="irParaProntuario('${a.brinco}')">${a.brinco}</td><td class="p-2 text-gray-600">${getIdadeFormatada(a.idadeDias)}</td><td class="p-2 text-gray-600 font-bold">${cat}</td><td class="p-2 text-gray-600">${a.statusRep}</td><td class="p-2 text-gray-600">${a.statusProd}</td><td class="p-2 font-black text-center text-gray-800">${del}</td></tr>`;
+        });
         html += '</tbody></table>';
         document.getElementById('tabela-detalhada-body').innerHTML = html;
+    }
+
+    function atualizarListaDescartados(dono) {
+        let html = '<table class="w-full text-[10px] text-left whitespace-nowrap"><thead class="bg-red-50 uppercase text-red-400"><tr><th class="p-2 border-b">Brinco</th><th class="p-2 border-b">Data Saída</th><th class="p-2 border-b">Motivo</th><th class="p-2 border-b">Sexo</th><th class="p-2 border-b">Idade (Na Saída)</th></tr></thead><tbody class="divide-y divide-red-100">';
+        
+        let descartados = [];
+        for(let b in cache.animais) {
+            let a = cache.animais[b];
+            if(!a.descartada) continue;
+            if(dono !== 'todos' && a.proprietario.toLowerCase() !== dono.toLowerCase()) continue;
+            descartados.push(a);
+        }
+        
+        // Ordenar descartados pela data de saída (mais recente primeiro)
+        descartados.sort((a, b) => {
+            let evtA = [...a.eventos].reverse().find(e => ["saida", "morte", "venda", "consumo"].includes(e.tipo.toLowerCase()));
+            let evtB = [...b.eventos].reverse().find(e => ["saida", "morte", "venda", "consumo"].includes(e.tipo.toLowerCase()));
+            let dataA = evtA ? evtA.data : 0;
+            let dataB = evtB ? evtB.data : 0;
+            return dataB - dataA;
+        });
+
+        descartados.forEach(a => {
+            // Localizar o evento exato de saída para descobrir o motivo e a data
+            let evtSaida = [...a.eventos].reverse().find(e => ["saida", "morte", "venda", "consumo"].includes(e.tipo.toLowerCase()));
+            let dataSaida = evtSaida ? new Date(evtSaida.data) : null;
+            let motivo = evtSaida ? evtSaida.tipo : 'Desconhecido';
+            
+            // Calcular a idade "congelada" no momento em que o animal saiu
+            let idadeNaSaida = "N/A";
+            if (a.nascimento && dataSaida) {
+                let diasVivos = Math.floor((dataSaida - a.nascimento) / 86400000);
+                idadeNaSaida = getIdadeFormatada(diasVivos);
+            }
+            
+            let dataStr = dataSaida ? dataSaida.toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit', year:'numeric'}) : '-';
+            
+            html += `<tr class="hover:bg-red-50"><td class="p-2 font-black brinco-link" onclick="irParaProntuario('${a.brinco}')">${a.brinco}</td><td class="p-2 text-gray-600">${dataStr}</td><td class="p-2 text-gray-600 uppercase font-bold">${motivo}</td><td class="p-2 text-gray-600">${a.sexo}</td><td class="p-2 text-gray-600">${idadeNaSaida}</td></tr>`;
+        });
+        html += '</tbody></table>';
+        document.getElementById('tabela-descartados-body').innerHTML = html;
     }
 
     function renderDashboard(dono) {
@@ -695,8 +758,9 @@
         { femeas: {}, machos: {} } : Object.values(db.proprietarios).reduce((a,c)=>{ for(let k in a.femeas){ a.femeas[k]+=c.femeas[k]||0; a.machos[k]+=c.machos[k]||0; } return a; }, {femeas:{ate_1:0,de_1_a_2:0,de_2_a_3:0,mais_de_3:0},machos:{ate_1:0,de_1_a_2:0,de_2_a_3:0,mais_de_3:0}});
         document.getElementById('lista-demografia').innerHTML = Object.entries({ ate_1: "Até 1 ano", de_1_a_2: "1 a 2 anos", de_2_a_3: "2 a 3 anos", mais_de_3: "Mais de 3 anos" }).map(([k,v]) => `<tr class="hover:bg-gray-50"><td class="p-3 font-medium text-xs text-gray-600">${v}</td><td class="p-3 text-center font-black text-green-700">${p.femeas[k]||0}</td><td class="p-3 text-center font-black text-blue-700">${p.machos[k]||0}</td></tr>`).join('');
         document.getElementById('val-lp').innerText = db.matriz.lactandoPrenhe || 0; document.getElementById('val-lv').innerText = db.matriz.lactandoVazia || 0; document.getElementById('val-sp').innerText = db.matriz.secaPrenhe || 0; document.getElementById('val-sv').innerText = db.matriz.secaVazia || 0;
-        document.getElementById('val-del').innerText = (db.totalLactando > 0 ? Math.round(db.somaDEL / db.totalLactando) : 0) + " DEL Médio";
+document.getElementById('val-del').innerText = (db.totalLactando > 0 ? Math.round(db.somaDEL / db.totalLactando) : 0) + " DEL Médio";
         atualizarListaDetalhada(dono);
+        atualizarListaDescartados(dono);
     }
 
     // --- LISTA DE AÇÕES ---
