@@ -185,6 +185,9 @@
                 <button id="btn-acao-tempo-60" class="btn-acao-tempo flex-1 py-2 text-[10px] font-black uppercase tracking-wider rounded-lg border text-gray-400" onclick="setHorizonte(60)">Janela 60D</button>
                 <button id="btn-acao-tempo-null" class="btn-acao-tempo flex-1 py-2 text-[10px] font-black uppercase tracking-wider rounded-lg border text-gray-400" onclick="setHorizonte(null)">Todo o Futuro</button>
             </div>
+            <!-- CONTAINER ONDE APARECEM AS PENDÊNCIAS DA INSPETORIA -->
+            <div id="lista-pendencias-inspetoria"></div>
+
             <div id="lista-acoes"></div>
             <div class="mt-4 mb-2">
                 <button id="btn-toggle-bezerros" onclick="toggleBezerros()" class="w-full py-3.5 bg-pink-50 text-pink-700 font-black uppercase tracking-widest text-[10px] rounded-xl border border-pink-200 shadow-sm transition-all"><i class="fas fa-baby-carriage mr-2"></i>Exibir Aleitamento e B19</button>
@@ -198,7 +201,7 @@
 
             <div class="bg-white p-6 rounded-2xl shadow-lg border-b-4 border-green-700">
                 <h2 class="font-black text-gray-800 mb-6 flex items-center uppercase tracking-tighter"><i class="fas fa-edit text-green-600 mr-2"></i>Manejo Diário</h2>
-                <form id="formManejo" onsubmit="salvarManejo(event)" class="space-y-4">
+                <form id="formManejo" onsubmit="prepararSalvamento(event)" class="space-y-4">
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label id="lab-brinco" class="block text-[10px] font-black text-gray-400 uppercase mb-1">Brinco</label>
@@ -290,6 +293,20 @@
     </div>
 </div>
 
+<!-- MODAL DECISÃO DA INSPETORIA -->
+<div id="modal-inspetoria" class="hidden fixed inset-0 z-[500] bg-black/80 flex flex-col justify-center items-center p-4">
+    <div class="bg-white p-6 rounded-3xl shadow-2xl max-w-sm w-full text-center">
+        <i class="fas fa-envelope-open-text text-5xl text-blue-600 mb-4 block"></i>
+        <h2 class="font-black text-xl text-gray-800 mb-2 uppercase tracking-tighter">Aviso à Inspetoria</h2>
+        <p class="text-sm text-gray-600 mb-6 font-medium">Este evento precisa ser comunicado à Defesa Agropecuária. Deseja enviar o e-mail oficial agora ou guardar nas pendências?</p>
+        <div class="space-y-3">
+            <button onclick="executarSalvamento('Enviado')" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-xl shadow-lg uppercase tracking-widest text-xs"><i class="fas fa-paper-plane mr-2"></i>Enviar E-mail Agora</button>
+            <button onclick="executarSalvamento('Pendente')" class="w-full bg-orange-100 hover:bg-orange-200 text-orange-700 font-black py-4 rounded-xl shadow border border-orange-200 uppercase tracking-widest text-xs"><i class="fas fa-clock mr-2"></i>Deixar Pendente</button>
+            <button onclick="fecharModalInspetoria()" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-600 font-black py-3 rounded-xl uppercase tracking-widest text-xs">Cancelar Registo</button>
+        </div>
+    </div>
+</div>
+
 <script>
     // --- CREDENCIAIS E APIS ---
     const API_URL = "https://script.google.com/macros/s/AKfycbxxyvefDRTk6H_LsQj4udhXcpC_VSk-0jRl46GJIwgJP2GHBh6cVZLFrlkCDpI-YZ4Q/exec";
@@ -303,6 +320,7 @@
     let graficosAtivos = {};
     let modoProd = 'mes';
     let viewFiltro = 'tudo';
+    let variaveisSalvamentoTemporario = null;
 
     // --- ARRANQUE E LOGIN ---
     document.addEventListener('DOMContentLoaded', () => {
@@ -476,7 +494,7 @@
     }
 
     // --- SALVAR MANEJO ---
-    async function salvarManejo(e) {
+    function prepararSalvamento(e) {
         e.preventDefault(); document.getElementById('box-erro-manejo').classList.add('hidden');
         const ev = document.getElementById('evento').value, mainDataStr = document.getElementById('data').value;
         let info1 = document.getElementById('info1').value, info2 = document.getElementById('info2').value, info3 = document.getElementById('info3').value;
@@ -489,17 +507,14 @@
             if (dEv > dHoj) return mostrarErroValidacao("A data do evento não pode ser lançada no futuro.");
             if (!animal && ev !== "Nascimento" && ev !== "Compra") return mostrarErroValidacao(`O animal ${mainBrinco} não existe. Registe o seu Nascimento ou Compra primeiro.`);
             if (animal) {
-                if (animal.descartada && ev !== "Saída" && ev !== "Troca de Brinco" && ev !== "Atualizar Foto") return mostrarErroValidacao("Animal inativo/descartado.");
+                if (animal.descartada && !["Saída", "Troca de Brinco", "Atualizar Foto"].includes(ev)) return mostrarErroValidacao("Animal inativo/descartado.");
                 if (animal.descartada && ev === "Saída") return mostrarErroValidacao(`O animal ${mainBrinco} já registou Saída anteriormente.`);
                 if (animal.nascimento && dEv.getTime() < animal.nascimento) return mostrarErroValidacao("A data é anterior ao nascimento do animal.");
                 const evFemea = ["Inseminação", "Parto", "Secagem (Pré-Parto)", "Encerramento Reprodutivo", "Secagem de Descarte", "Vacina B19"];
                 if (evFemea.includes(ev) && animal.sexo !== "F") return mostrarErroValidacao(`O evento '${ev}' é exclusivo para fêmeas.`);
                 if (ev === "Inseminação" && animal.idadeDias < 365) return mostrarErroValidacao(`Inseminação Bloqueada: Esta bezerra possui apenas ${Math.floor(animal.idadeDias/30)} meses.`);
-                if (ev === "Parto") { if (animal.statusRep === "Vazia" && !animal.dtUltimaIA) return mostrarErroValidacao("Parto bloqueado: Não há registo prévio de Inseminação.");
-                if (animal.dtUltimoParto && ((dEv.getTime() - animal.dtUltimoParto) / 86400000) < 260) return mostrarErroValidacao(`Intervalo biológico impossível. O último parto foi há menos de 260 dias.`);
-                }
-                if (ev === "Secagem (Pré-Parto)") { if (animal.statusProd !== "Lactando") return mostrarErroValidacao("A vaca não está em lactação.");
-                if (animal.statusRep !== "Prenhe" && animal.statusRep !== "Pendente") return mostrarErroValidacao("Secagem Pré-Parto exige fêmea prenhe (ou IA pendente)."); }
+                if (ev === "Parto") { if (animal.statusRep === "Vazia" && !animal.dtUltimaIA) return mostrarErroValidacao("Parto bloqueado: Não há registo prévio de Inseminação."); if (animal.dtUltimoParto && ((dEv.getTime() - animal.dtUltimoParto) / 86400000) < 260) return mostrarErroValidacao(`Intervalo biológico impossível. O último parto foi há menos de 260 dias.`); }
+                if (ev === "Secagem (Pré-Parto)") { if (animal.statusProd !== "Lactando") return mostrarErroValidacao("A vaca não está em lactação."); if (animal.statusRep !== "Prenhe" && animal.statusRep !== "Pendente") return mostrarErroValidacao("Secagem Pré-Parto exige fêmea prenhe (ou IA pendente)."); }
                 if (ev === "Encerramento Reprodutivo" && animal.statusRep !== "Pendente") return mostrarErroValidacao("A fêmea não possui Inseminação pendente para desistir.");
                 if (ev === "Vacina B19" && animal.vacinaB19) return mostrarErroValidacao("Esta bezerra já possui a vacina B19 registada.");
                 if (ev === "Atualizar Foto" && !document.getElementById('input-foto').files[0]) return mostrarErroValidacao("Tem de escolher ou tirar uma foto primeiro.");
@@ -510,47 +525,67 @@
             }
         }
 
-        const btn = document.getElementById('btn-salvar'); btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>A Gravar...';
-        document.getElementById('loading').classList.remove('hidden');
+        variaveisSalvamentoTemporario = { ev, mainDataStr, info1, info2, info3, mainBrinco };
+        let isNascimentoCria = (ev === "Parto" && document.getElementById('check-registrar-cria').checked);
+        let checkMorteConsumo = (ev === "Saída" && (info1.trim().toLowerCase() === "morte" || info1.trim().toLowerCase() === "consumo"));
+        
+        if (ev === "Nascimento" || checkMorteConsumo || isNascimentoCria) {
+            document.getElementById('modal-inspetoria').classList.remove('hidden');
+        } else {
+            executarSalvamento("nenhum");
+        }
+    }
 
-        // UPLOAD DA FOTO PARA CLOUDINARY ANTES DE ENVIAR PARA A PLANILHA
+    function fecharModalInspetoria() { document.getElementById('modal-inspetoria').classList.add('hidden'); }
+
+    async function executarSalvamento(statusInspetoria) {
+        fecharModalInspetoria();
+        let { ev, mainDataStr, info1, info2, info3, mainBrinco } = variaveisSalvamentoTemporario;
+        const btn = document.getElementById('btn-salvar'); btn.disabled = true; document.getElementById('loading').classList.remove('hidden');
+        
         if (ev === "Atualizar Foto") {
             document.getElementById('txt-loading').innerText = "A Enviar Foto...";
-            const fotoFile = document.getElementById('input-foto').files[0];
-            try {
-                let fotoUrl = await uploadParaCloudinary(fotoFile);
-                info1 = fotoUrl;
-            } catch (err) {
-                document.getElementById('loading').classList.add('hidden'); btn.disabled = false; btn.innerHTML = 'Registar Manejo';
-                return mostrarErroValidacao(err.message);
-            }
+            try { info1 = await uploadParaCloudinary(document.getElementById('input-foto').files[0]); } 
+            catch (err) { document.getElementById('loading').classList.add('hidden'); btn.disabled = false; return mostrarErroValidacao(err.message); }
         }
 
-        document.getElementById('txt-loading').innerText = "A Enviar ao Diário...";
-        let eventosEnvio = [];
+        document.getElementById('txt-loading').innerText = "A Gravar no Diário...";
+        
+        let donoDoManejo = "Mateus";
+        if (ev === "Compra") donoDoManejo = info3 || "Mateus";
+        else if (cache && cache.animais && cache.animais[mainBrinco]) donoDoManejo = cache.animais[mainBrinco].proprietario;
+
+        let eventosEnvio = []; 
         if (ev === "Parto") {
-            const registrar = document.getElementById('check-registrar-cria').checked;
             eventosEnvio.push({ brinco: mainBrinco, data: mainDataStr, evento: "Parto", info1: info1, info2: "", info3: "" });
-            if (registrar) {
+            if (document.getElementById('check-registrar-cria').checked) {
                 let bC = formatarBrincoUI_internal(document.getElementById('brinco-cria').value || (cache ? cache.dadosFormulario.proximoBrinco : ''));
                 let paiId = (cache && cache.dadosFormulario.historicoIAs[mainBrinco]) || "";
-                eventosEnvio.push({ brinco: bC, data: mainDataStr, evento: "Nascimento", info1: info1, info2: mainBrinco, info3: paiId }, { brinco: bC, data: mainDataStr, evento: "Propriedade", info1: document.getElementById('proprietario-cria').value });
+                let donoCria = document.getElementById('proprietario-cria').value || "Mateus";
+                eventosEnvio.push({ brinco: bC, data: mainDataStr, evento: "Nascimento", info1: info1, info2: mainBrinco, info3: paiId, statusInspetoria: statusInspetoria, dono: donoCria }, { brinco: bC, data: mainDataStr, evento: "Propriedade", info1: donoCria });
             }
-        } else { eventosEnvio.push({ brinco: mainBrinco, data: mainDataStr, evento: ev, info1: info1, info2: info2, info3: info3 }); }
-
-        const payloadFinal = { senha: localStorage.getItem('vaquinhas_pwd') || "", eventos: eventosEnvio };
+        } else { 
+            eventosEnvio.push({ brinco: mainBrinco, data: mainDataStr, evento: ev, info1: info1, info2: info2, info3: info3, statusInspetoria: statusInspetoria, dono: donoDoManejo }); 
+        }
 
         try {
-            const res = await fetch(API_URL, { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payloadFinal) }).then(r=>r.json());
+            const res = await fetch(API_URL, { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ senha: localStorage.getItem('vaquinhas_pwd') || "", eventos: eventosEnvio }) }).then(r=>r.json());
             if(res.status === 'auth_error') { abrirTelaLogin(res.msg); return; }
-            if(res.status === 'sucesso') {
-                alert(res.msg); document.getElementById('formManejo').reset(); document.getElementById('data').valueAsDate = new Date();
-                document.getElementById('check-registrar-cria').checked = false; toggleCriaFields(); atualizarCamposForm();
-                document.getElementById('preview-foto-container').style.display = 'none';
-                cache = null; carregarDadosForcado(localStorage.getItem('vaquinhas_pwd'));
-            } else throw new Error(res.msg);
-        } catch (err) { mostrarErroValidacao("Falha na gravação: " + err.message); document.getElementById('loading').classList.add('hidden'); }
+            if(res.status === 'sucesso') { alert(res.msg); document.getElementById('formManejo').reset(); document.getElementById('data').valueAsDate = new Date(); toggleCriaFields(); atualizarCamposForm(); document.getElementById('preview-foto-container').style.display = 'none'; cache = null; carregarDadosForcado(); } 
+            else throw new Error(res.msg);
+        } catch (err) { mostrarErroValidacao("Falha na gravação: " + err.message); document.getElementById('loading').classList.add('hidden'); } 
         finally { btn.disabled = false; btn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Registar Manejo'; }
+    }
+
+    // --- FUNÇÕES DE PENDÊNCIA (INSPETORIA) ---
+    async function resolverPendenciaInspetoria(linhaDaPlanilha, brinco, evento, info1, dataStr, tipoResolucao, donoDoAnimal) {
+        document.getElementById('loading').classList.remove('hidden'); document.getElementById('txt-loading').innerText = "A Resolver Pendência...";
+        try {
+            const payload = { acao: "resolver_pendencia_inspetoria", senha: localStorage.getItem('vaquinhas_pwd') || "", linha: linhaDaPlanilha, brinco: brinco, evento: evento, info1: info1, dataStr: dataStr, tipo_resolucao: tipoResolucao, dono: donoDoAnimal };
+            const res = await fetch(API_URL, { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) }).then(r=>r.json());
+            if(res.status === 'auth_error') { abrirTelaLogin(res.msg); return; }
+            if(res.status === 'sucesso') { cache = null; carregarDadosForcado(); } else throw new Error(res.msg);
+        } catch(err) { alert("Falha ao resolver: " + err.message); document.getElementById('loading').classList.add('hidden'); }
     }
 
     // --- GENEALOGIA ---
@@ -775,21 +810,29 @@ document.getElementById('val-del').innerText = (db.totalLactando > 0 ? Math.roun
 
     function renderAcoes() {
         const list = document.getElementById('lista-acoes'); if (!cache) return;
+        
+        let htmlPend = '';
+        if (cache.pendenciasInspetoria && cache.pendenciasInspetoria.length > 0) {
+            htmlPend += `<div class="mb-6 bg-orange-50 rounded-2xl shadow-sm border-t-4 border-orange-500 overflow-hidden"><div class="bg-orange-100 px-4 py-3 border-b border-orange-200 flex items-center justify-between"><h4 class="font-black text-[10px] uppercase tracking-widest text-orange-800"><i class="fas fa-exclamation-triangle mr-2"></i>Avisos Pendentes (Inspetoria)</h4></div><div class="divide-y divide-orange-100">`;
+            cache.pendenciasInspetoria.forEach(p => {
+                let dataOcorrencia = new Date(p.data).toLocaleDateString('pt-BR');
+                let donoPendente = cache.animais[p.brinco] ? cache.animais[p.brinco].proprietario : "Mateus";
+                htmlPend += `<div class="p-3"><div class="flex justify-between items-center mb-2"><div><span class="font-black text-lg text-orange-900 brinco-link" onclick="irParaProntuario('${p.brinco}')">${p.brinco}</span> <span class="text-xs font-bold uppercase text-orange-600 bg-orange-100 px-2 py-0.5 rounded">${p.evento}</span></div><div class="text-[10px] font-black text-orange-500">${dataOcorrencia}</div></div><div class="flex gap-2 mt-2"><button onclick="resolverPendenciaInspetoria('${p.linha}','${p.brinco}','${p.evento}','${p.info1}','${dataOcorrencia}','enviar', '${donoPendente}')" class="flex-1 bg-orange-600 hover:bg-orange-700 text-white py-2 rounded font-black text-[9px] uppercase"><i class="fas fa-envelope mr-1"></i>Enviar Email</button><button onclick="resolverPendenciaInspetoria('${p.linha}','${p.brinco}','${p.evento}','${p.info1}','${dataOcorrencia}','ignorar', '${donoPendente}')" class="flex-1 bg-white hover:bg-gray-50 border border-orange-200 text-orange-800 py-2 rounded font-black text-[9px] uppercase"><i class="fas fa-check mr-1"></i>Só Concluir</button></div></div>`;
+            });
+            htmlPend += `</div></div>`;
+        }
+        document.getElementById('lista-pendencias-inspetoria').innerHTML = htmlPend;
+
         try {
             let h = ''; const card = (t, ic, col, cont) => `<div class="mb-6 bg-white rounded-2xl shadow-sm border-t-4 ${col} overflow-hidden"><div class="bg-gray-50 px-4 py-3 border-b flex items-center justify-between"><h4 class="font-black text-[10px] uppercase tracking-widest text-gray-500"><i class="${ic} mr-2"></i>${t}</h4></div><div class="divide-y divide-gray-100">${cont}</div></div>`;
             const vB19 = cache.vacinaB19 || []; const alei = cache.aleitamento || []; const part = filtrarPorHorizonte(cache.partos || [], 'data');
             const sec = filtrarPorHorizonte(cache.secagem || [], 'data'); const vApt = cache.vacasAptas || []; const nApt = cache.novilhasAptas || [];
 
-            if (filtroAcoes.tipo === 'todos' || filtroAcoes.tipo === 'secagem') { h += card('Previsão Secagem', 'fas fa-leaf text-orange-600', 'border-orange-500', sec.map(s => `<div class="p-3 flex justify-between items-center hover:bg-gray-50"><span class="font-bold text-lg brinco-link" onclick="irParaProntuario('${s.brinco}')">${s.brinco}</span><div class="text-orange-600 font-black text-sm"><i class="far fa-calendar-alt mr-1"></i> ${new Date(s.data).toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'})}</div></div>`).join('') || '<p class="p-4 text-center text-gray-400 text-xs italic">Sem eventos no período.</p>');
-            }
+            if (filtroAcoes.tipo === 'todos' || filtroAcoes.tipo === 'secagem') { h += card('Previsão Secagem', 'fas fa-leaf text-orange-600', 'border-orange-500', sec.map(s => `<div class="p-3 flex justify-between items-center hover:bg-gray-50"><span class="font-bold text-lg brinco-link" onclick="irParaProntuario('${s.brinco}')">${s.brinco}</span><div class="text-orange-600 font-black text-sm"><i class="far fa-calendar-alt mr-1"></i> ${new Date(s.data).toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'})}</div></div>`).join('') || '<p class="p-4 text-center text-gray-400 text-xs italic">Sem eventos no período.</p>'); }
             if (filtroAcoes.tipo === 'todos' || filtroAcoes.tipo === 'partos') { 
                 h += card('Previsão Partos', 'fas fa-baby-carriage text-red-600', 'border-red-600', part.map(p => {
-                    let antibio = '';
-                    let a = cache.animais[p.brinco];
-                    if (a && a.eventos) {
-                        let ultSeca = [...a.eventos].reverse().find(e => e.tipo === 'secagem (pre-parto)');
-                        if (ultSeca && ultSeca.info1) antibio = `<div class="text-[9px] text-orange-500 font-black uppercase mt-1"><i class="fas fa-pills text-orange-400 mr-1"></i>${ultSeca.info1}</div>`;
-                    }
+                    let antibio = ''; let a = cache.animais[p.brinco];
+                    if (a && a.eventos) { let ultSeca = [...a.eventos].reverse().find(e => e.tipo === 'secagem (pre-parto)'); if (ultSeca && ultSeca.info1) antibio = `<div class="text-[9px] text-orange-500 font-black uppercase mt-1"><i class="fas fa-pills text-orange-400 mr-1"></i>${ultSeca.info1}</div>`; }
                     return `<div class="p-3 flex justify-between items-center hover:bg-gray-50"><div><span class="font-bold text-lg brinco-link" onclick="irParaProntuario('${p.brinco}')">${p.brinco}</span><span class="text-[9px] bg-gray-200 px-2 py-0.5 rounded font-black ml-1">${p.cat}</span>${antibio}</div><div class="text-red-600 font-black text-sm"><i class="far fa-calendar-alt mr-1"></i> ${new Date(p.data).toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'})}</div></div>`;
                 }).join('') || '<p class="p-4 text-center text-gray-400 text-xs italic">Sem eventos no período.</p>');
             }
