@@ -588,18 +588,59 @@
         } catch(err) { alert("Falha ao resolver: " + err.message); document.getElementById('loading').classList.add('hidden'); }
     }
 
-    // --- GENEALOGIA ---
+    // --- GENEALOGIA E DESCENDENTES ---
     function getPais(brinco) {
-        let res = { mae: 'Desconhecida', pai: 'Desconhecido' };
+        let res = { mae: null, pai: null };
         if(!cache || !cache.animais || !cache.animais[brinco]) return res;
         let a = cache.animais[brinco];
         if(!a.eventos) return res;
         let nasc = a.eventos.find(e => e.tipo === 'nascimento');
         if(nasc) {
-            if(nasc.info2) res.mae = nasc.info2;
-            if(nasc.info3) res.pai = nasc.info3;
+            if(nasc.info2 && nasc.info2.trim() !== '') res.mae = nasc.info2;
+            if(nasc.info3 && nasc.info3.trim() !== '') res.pai = nasc.info3;
         }
         return res;
+    }
+
+    function getFilhos(brincoTarget) {
+        let filhos = [];
+        if (!cache || !cache.animais) return filhos;
+        for (let b in cache.animais) {
+            let a = cache.animais[b];
+            if (a.eventos) {
+                let nasc = a.eventos.find(e => e.tipo === 'nascimento');
+                // Se o animal consultado for a mãe (info2) ou o pai (info3) deste animal (b)
+                if (nasc && (nasc.info2 === brincoTarget || nasc.info3 === brincoTarget)) {
+                    let outroProgenitor = (nasc.info2 === brincoTarget) ? nasc.info3 : nasc.info2;
+                    filhos.push({ brinco: b, outro: outroProgenitor || 'Desconhecido', sexo: a.sexo, descartada: a.descartada });
+                }
+            }
+        }
+        return filhos.sort((a,b) => a.brinco.localeCompare(b.brinco));
+    }
+
+    function buildDescendentesHTML(brinco, nivel = 0) {
+        let filhos = getFilhos(brinco);
+        if (filhos.length === 0) return '';
+        
+        let html = '';
+        filhos.forEach(f => {
+            let ic = f.sexo === 'F' ? '<i class="fas fa-venus text-pink-500"></i>' : '<i class="fas fa-mars text-blue-500"></i>';
+            let bg = f.descartada ? 'bg-gray-100 border-gray-300' : (f.sexo === 'F' ? 'bg-pink-50 border-pink-200' : 'bg-blue-50 border-blue-200');
+            let txtColor = f.descartada ? 'text-gray-500' : 'text-gray-800';
+            let desc = f.descartada ? '<span class="text-[8px] text-red-500 ml-1">(INATIVO)</span>' : '';
+            let marginLeft = nivel > 0 ? 16 : 0; 
+            
+            html += `<div style="margin-left: ${marginLeft}px;" class="relative border-l-2 border-gray-300 pl-4 pb-3 mt-2">
+                        <div class="absolute -left-[9px] top-3 w-4 h-4 bg-white border-2 border-gray-400 rounded-full"></div>
+                        <div class="p-2 border rounded-xl shadow-sm ${bg} cursor-pointer hover:opacity-80" onclick="irParaProntuario('${f.brinco}')">
+                            <div class="font-black text-sm ${txtColor}">${ic} ${f.brinco} ${desc}</div>
+                            <div class="text-[9px] uppercase font-bold text-gray-500 mt-1">C/ ${f.outro}</div>
+                        </div>
+                        ${buildDescendentesHTML(f.brinco, nivel + 1)}
+                     </div>`;
+        });
+        return html;
     }
 
     function abrirGenealogia(brinco) {
@@ -608,37 +649,60 @@
         setTimeout(() => m.classList.remove('opacity-0'), 10);
 
         let p1 = getPais(brinco);
-        let pMae = getPais(p1.mae);
+        let temMae = p1.mae !== null;
+        let temPai = p1.pai !== null;
+        
+        let html = '<div class="flex flex-col items-center mt-4 w-full">';
+        
+        // BLOCO ASCENDENTES (PAIS)
+        if (temMae || temPai) {
+            html += `<div class="flex justify-center gap-4 w-full max-w-sm px-2 mb-2">`;
+            if (temMae) {
+                let oc = cache.animais[p1.mae] ? `onclick="irParaProntuario('${p1.mae}')"` : '';
+                let cl = cache.animais[p1.mae] ? 'cursor-pointer hover:bg-pink-100 shadow-md' : 'opacity-70 border-dashed';
+                html += `<div class="tree-node flex-1 bg-pink-50 border-pink-300 text-pink-800 ${cl}" ${oc}>Mãe<br><span class="text-gray-900 text-sm">${p1.mae}</span></div>`;
+            }
+            if (temPai) {
+                let oc = cache.animais[p1.pai] ? `onclick="irParaProntuario('${p1.pai}')"` : '';
+                let cl = cache.animais[p1.pai] ? 'cursor-pointer hover:bg-blue-100 shadow-md' : 'opacity-70 border-dashed';
+                html += `<div class="tree-node flex-1 bg-blue-50 border-blue-300 text-blue-800 ${cl}" ${oc}>Pai<br><span class="text-gray-900 text-sm">${p1.pai}</span></div>`;
+            }
+            html += `</div>`;
+            
+            // CONECTORES DOS PAIS PARA O ANIMAL
+            if (temMae && temPai) {
+                html += `<div class="flex w-full max-w-sm justify-center mb-2"><div class="w-1/2 flex flex-col items-end"><div class="border-t-2 border-r-2 border-gray-300 w-1/2 h-4 rounded-tr-lg mt-0"></div></div><div class="w-1/2 flex flex-col items-start"><div class="border-t-2 border-l-2 border-gray-300 w-1/2 h-4 rounded-tl-lg mt-0"></div></div></div>`;
+            } else {
+                html += `<div class="tree-line mb-2"></div>`;
+            }
+        }
 
-        let html = `
-            <div class="flex flex-col items-center mt-4">
-                <div class="flex justify-around w-full max-w-sm px-2 mb-1">
-                    <div class="tree-node w-24 bg-pink-50 border-pink-200 text-pink-700">Avó Mat.<br><span class="text-gray-900">${pMae.mae}</span></div>
-                    <div class="tree-node w-24 bg-blue-50 border-blue-200 text-blue-700">Avô Mat.<br><span class="text-gray-900">${pMae.pai}</span></div>
-                    <div class="tree-node w-24 bg-gray-50 text-gray-400">Avó Pat.<br><span class="text-gray-400">N/A</span></div>
-                    <div class="tree-node w-24 bg-gray-50 text-gray-400">Avô Pat.<br><span class="text-gray-400">N/A</span></div>
-                </div>
-                <div class="flex w-full max-w-sm mb-1">
-                    <div class="w-1/2 flex flex-col items-center"><div class="tree-line"></div><div class="flex w-1/2 border-t-2 border-gray-300 h-4"></div></div>
-                    <div class="w-1/2 flex flex-col items-center"><div class="tree-line"></div></div>
-                </div>
-                <div class="flex justify-around w-full max-w-sm px-8 mb-1">
-                    <div class="tree-node w-32 bg-pink-50 border-pink-300 text-pink-800 ${cache.animais[p1.mae] ? 'cursor-pointer underline shadow' : ''}" ${cache.animais[p1.mae] ? `onclick="irParaProntuario('${p1.mae}')"` : ''}>Mãe<br><span class="text-gray-900 text-sm">${p1.mae}</span></div>
-                    <div class="tree-node w-32 bg-blue-50 border-blue-300 text-blue-800">Pai<br><span class="text-gray-900 text-sm">${p1.pai}</span></div>
-                </div>
-                <div class="flex w-full max-w-sm justify-center mb-1">
-                    <div class="w-1/2 flex flex-col items-end"><div class="border-t-2 border-r-2 border-gray-300 w-1/2 h-5 rounded-tr-lg mt-0"></div></div>
-                    <div class="w-1/2 flex flex-col items-start"><div class="border-t-2 border-l-2 border-gray-300 w-1/2 h-5 rounded-tl-lg mt-0"></div></div>
-                </div>
-                <div class="tree-node w-40 border-green-500 bg-green-50 text-green-800 shadow-md">Animal<br><span class="text-gray-900 text-lg">${brinco}</span></div>
-            </div>
-        `;
+        // ANIMAL CENTRAL
+        let a = cache.animais[brinco] || {sexo: 'F'};
+        let ic = a.sexo === 'M' ? '<i class="fas fa-mars text-blue-600"></i>' : '<i class="fas fa-venus text-pink-600"></i>';
+        let cor = a.sexo === 'M' ? 'border-blue-500 bg-blue-50' : 'border-green-500 bg-green-50';
+        
+        html += `<div class="tree-node w-48 ${cor} shadow-lg z-10 mb-4 text-center rounded-xl p-3 border-4"><div class="text-[10px] text-gray-500 uppercase font-bold tracking-widest mb-1">ANIMAL</div><span class="text-gray-900 text-xl font-black">${ic} ${brinco}</span></div>`;
+
+        // BLOCO DESCENDENTES (MÚLTIPLAS GERAÇÕES)
+        let htmlDescendentes = buildDescendentesHTML(brinco, 0);
+        
+        if (htmlDescendentes !== '') {
+            html += `<div class="w-full max-w-sm mt-2 border-t-2 border-dashed border-gray-300 pt-4">
+                        <h3 class="text-[10px] font-black uppercase text-gray-500 mb-4 tracking-widest text-center"><i class="fas fa-code-branch mr-2"></i>Descendentes Registados</h3>
+                        <div class="text-left w-full pl-2 pr-2">
+                            ${htmlDescendentes}
+                        </div>
+                     </div>`;
+        }
+
+        html += `</div>`;
         document.getElementById('conteudo-genealogia').innerHTML = html;
     }
 
     function fecharGenealogia() {
         const m = document.getElementById('modal-genealogia');
-        m.classList.add('opacity-0');
+        m.classList.remove('opacity-0');
         setTimeout(() => m.classList.add('hidden'), 300);
     }
 
