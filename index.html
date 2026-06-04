@@ -30,10 +30,8 @@
         .foto-perfil { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); cursor: pointer; }
         #preview-foto-container { display: none; margin-top: 10px; text-align: center; }
         #preview-foto { max-width: 100%; max-height: 200px; border-radius: 12px; border: 2px dashed #cbd5e1; margin: 0 auto; object-fit: contain; }
-        
         .brinco-link { color: #2563eb; cursor: pointer; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 2px; }
         .brinco-link:hover { color: #1d4ed8; }
-        
         .tree-node { border: 2px solid #e5e7eb; border-radius: 8px; padding: 8px; text-align: center; background: white; font-weight: 900; font-size: 11px; z-index: 10; position: relative;}
         .tree-line { width: 2px; height: 20px; background: #cbd5e1; margin: 0 auto; }
         .tree-h-line { height: 2px; background: #cbd5e1; flex-grow: 1; }
@@ -94,15 +92,16 @@
                 <div class="bg-gray-50 px-4 py-2 border-b flex justify-between items-center"><h3 class="font-black text-[10px] text-gray-500 uppercase italic tracking-widest">Status das Vacas</h3><span id="val-del" class="bg-blue-100 text-blue-700 text-[10px] font-black px-2 py-1 rounded shadow-sm">-- DEL</span></div>
                 <div class="grid grid-cols-2 gap-px bg-gray-100">
                     <div class="bg-white p-4 text-center border-r border-b"><span class="text-[9px] uppercase font-black text-gray-400">Lact / Prenhe</span><span id="val-lp" class="block text-2xl font-black text-green-600">0</span></div>
-                    <div class="bg-white p-4 text-center border-b"><span class="text-[9px] uppercase font-black text-gray-400">Lact / Vazia</span><span id="val-lv" class="block text-2xl font-black text-orange-500">0</span></div>
+                    <div class="bg-white p-4 text-center border-b"><span class="text-[9px] uppercase font-black text-gray-400">Lact / Não Prenhe</span><span id="val-lv" class="block text-2xl font-black text-orange-500">0</span></div>
                     <div class="bg-white p-4 text-center border-r"><span class="text-[9px] uppercase font-black text-gray-400">Seca / Prenhe</span><span id="val-sp" class="block text-2xl font-black text-blue-600">0</span></div>
-                    <div class="bg-white p-4 text-center"><span class="text-[9px] uppercase font-black text-gray-400">Seca / Vazia</span><span id="val-sv" class="block text-2xl font-black text-red-500">0</span></div>
+                    <div class="bg-white p-4 text-center"><span class="text-[9px] uppercase font-black text-gray-400">Seca / Não Prenhe</span><span id="val-sv" class="block text-2xl font-black text-red-500">0</span></div>
                 </div>
             </div>
             
-<div class="flex gap-2 mt-4">
-                <button onclick="toggleListaDetalhada()" class="flex-1 py-3 bg-gray-800 text-white font-black uppercase text-[10px] tracking-widest rounded-xl shadow-sm"><i class="fas fa-list mr-2"></i>Ativos</button>
-                <button onclick="toggleListaDescartados()" class="flex-1 py-3 bg-red-50 text-red-700 border border-red-200 font-black uppercase text-[10px] tracking-widest rounded-xl shadow-sm hover:bg-red-100 transition"><i class="fas fa-times-circle mr-2"></i>Descartados</button>
+            <div class="flex gap-2 mt-4">
+                <button onclick="toggleListaDetalhada()" class="flex-1 py-3 bg-gray-800 text-white font-black uppercase text-[10px] tracking-widest rounded-xl shadow-sm hover:bg-gray-700 transition"><i class="fas fa-list mr-2"></i>Ativos</button>
+                <button onclick="toggleListaDescartados()" class="flex-1 py-3 bg-red-50 text-red-700 border border-red-200 font-black uppercase text-[10px] tracking-widest rounded-xl shadow-sm hover:bg-red-100 transition"><i class="fas fa-times-circle mr-2"></i>Inativos</button>
+                <button onclick="gerarRelatorioImpressao()" class="flex-1 py-3 bg-blue-600 text-white font-black uppercase text-[10px] tracking-widest rounded-xl shadow-sm hover:bg-blue-700 transition"><i class="fas fa-print mr-2"></i>Relatório</button>
             </div>
             
             <div id="lista-detalhada-container" class="hidden mt-3 bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto">
@@ -147,7 +146,6 @@
                 <button onclick="sincronizarSmartcoop()" class="w-full mt-3 py-3 bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-600 hover:text-white font-black uppercase text-[10px] tracking-widest rounded-xl shadow-sm transition-colors">
                     <i class="fas fa-cloud-download-alt mr-2"></i>Importar Dados do Smartcoop
                 </button>
-                
             </div>
 
             <div id="container-graficos-diarios" class="space-y-4">
@@ -185,7 +183,6 @@
                 <button id="btn-acao-tempo-60" class="btn-acao-tempo flex-1 py-2 text-[10px] font-black uppercase tracking-wider rounded-lg border text-gray-400" onclick="setHorizonte(60)">Janela 60D</button>
                 <button id="btn-acao-tempo-null" class="btn-acao-tempo flex-1 py-2 text-[10px] font-black uppercase tracking-wider rounded-lg border text-gray-400" onclick="setHorizonte(null)">Todo o Futuro</button>
             </div>
-            <!-- CONTAINER ONDE APARECEM AS PENDÊNCIAS DA INSPETORIA -->
             <div id="lista-pendencias-inspetoria"></div>
 
             <div id="lista-acoes"></div>
@@ -293,7 +290,6 @@
     </div>
 </div>
 
-<!-- MODAL DECISÃO DA INSPETORIA -->
 <div id="modal-inspetoria" class="hidden fixed inset-0 z-[500] bg-black/80 flex flex-col justify-center items-center p-4">
     <div class="bg-white p-6 rounded-3xl shadow-2xl max-w-sm w-full text-center">
         <i class="fas fa-envelope-open-text text-5xl text-blue-600 mb-4 block"></i>
@@ -318,9 +314,9 @@
     let filtroAcoes = { tipo: 'todos', horizonteDias: 60 };
     let mostrarBezerreiros = false;
     let graficosAtivos = {};
-    let modoProd = 'mes';
-    let viewFiltro = 'tudo';
+    let modoProd = 'mes', viewFiltro = 'tudo'; 
     let variaveisSalvamentoTemporario = null;
+    let donoAtual = 'todos';
 
     // --- ARRANQUE E LOGIN ---
     document.addEventListener('DOMContentLoaded', () => {
@@ -514,8 +510,8 @@
                 if (evFemea.includes(ev) && animal.sexo !== "F") return mostrarErroValidacao(`O evento '${ev}' é exclusivo para fêmeas.`);
                 if (ev === "Inseminação" && animal.idadeDias < 365) return mostrarErroValidacao(`Inseminação Bloqueada: Esta bezerra possui apenas ${Math.floor(animal.idadeDias/30)} meses.`);
                 if (ev === "Parto") { if (animal.statusRep === "Vazia" && !animal.dtUltimaIA) return mostrarErroValidacao("Parto bloqueado: Não há registo prévio de Inseminação."); if (animal.dtUltimoParto && ((dEv.getTime() - animal.dtUltimoParto) / 86400000) < 260) return mostrarErroValidacao(`Intervalo biológico impossível. O último parto foi há menos de 260 dias.`); }
-                if (ev === "Secagem (Pré-Parto)") { if (animal.statusProd !== "Lactando") return mostrarErroValidacao("A vaca não está em lactação."); if (animal.statusRep !== "Prenhe" && animal.statusRep !== "Pendente") return mostrarErroValidacao("Secagem Pré-Parto exige fêmea prenhe (ou IA pendente)."); }
-                if (ev === "Encerramento Reprodutivo" && animal.statusRep !== "Pendente") return mostrarErroValidacao("A fêmea não possui Inseminação pendente para desistir.");
+                if (ev === "Secagem (Pré-Parto)") { if (animal.statusProd !== "Lactando") return mostrarErroValidacao("A vaca não está em lactação."); if (animal.statusRep !== "Prenhe" && animal.statusRep !== "Coberta") return mostrarErroValidacao("Secagem Pré-Parto exige fêmea prenhe ou coberta."); }
+                if (ev === "Encerramento Reprodutivo" && animal.statusRep !== "Coberta") return mostrarErroValidacao("A fêmea não possui registo de cobertura para desistir da IA.");
                 if (ev === "Vacina B19" && animal.vacinaB19) return mostrarErroValidacao("Esta bezerra já possui a vacina B19 registada.");
                 if (ev === "Atualizar Foto" && !document.getElementById('input-foto').files[0]) return mostrarErroValidacao("Tem de escolher ou tirar uma foto primeiro.");
             }
@@ -588,6 +584,20 @@
         } catch(err) { alert("Falha ao resolver: " + err.message); document.getElementById('loading').classList.add('hidden'); }
     }
 
+    // --- CÁLCULO DE CATEGORIAS RICAS E FAIXAS ETÁRIAS (JS) ---
+    function calcularCategoria(a) {
+        if (a.idadeDias <= 120) return a.sexo === 'M' ? 'Bezerro' : 'Bezerra';
+        if (a.sexo === 'M') return a.usadoReprodutor ? 'Reprodutor' : 'Novilho';
+        return a.partosContagem > 0 ? 'Vaca' : 'Novilha';
+    }
+
+    function determinarFaixaEtariaJs(dias) {
+        if (dias <= 365) return 'ate_1';
+        if (dias <= 730) return 'de_1_a_2';
+        if (dias <= 1095) return 'de_2_a_3';
+        return 'mais_de_3';
+    }
+
     // --- GENEALOGIA E DESCENDENTES ---
     function getPais(brinco) {
         let res = { mae: null, pai: null };
@@ -609,7 +619,6 @@
             let a = cache.animais[b];
             if (a.eventos) {
                 let nasc = a.eventos.find(e => e.tipo === 'nascimento');
-                // Se o animal consultado for a mãe (info2) ou o pai (info3) deste animal (b)
                 if (nasc && (nasc.info2 === brincoTarget || nasc.info3 === brincoTarget)) {
                     let outroProgenitor = (nasc.info2 === brincoTarget) ? nasc.info3 : nasc.info2;
                     filhos.push({ brinco: b, outro: outroProgenitor || 'Desconhecido', sexo: a.sexo, descartada: a.descartada });
@@ -654,7 +663,6 @@
         
         let html = '<div class="flex flex-col items-center mt-4 w-full">';
         
-        // BLOCO ASCENDENTES (PAIS)
         if (temMae || temPai) {
             html += `<div class="flex justify-center gap-4 w-full max-w-sm px-2 mb-2">`;
             if (temMae) {
@@ -669,7 +677,6 @@
             }
             html += `</div>`;
             
-            // CONECTORES DOS PAIS PARA O ANIMAL
             if (temMae && temPai) {
                 html += `<div class="flex w-full max-w-sm justify-center mb-2"><div class="w-1/2 flex flex-col items-end"><div class="border-t-2 border-r-2 border-gray-300 w-1/2 h-4 rounded-tr-lg mt-0"></div></div><div class="w-1/2 flex flex-col items-start"><div class="border-t-2 border-l-2 border-gray-300 w-1/2 h-4 rounded-tl-lg mt-0"></div></div></div>`;
             } else {
@@ -677,14 +684,12 @@
             }
         }
 
-        // ANIMAL CENTRAL
         let a = cache.animais[brinco] || {sexo: 'F'};
         let ic = a.sexo === 'M' ? '<i class="fas fa-mars text-blue-600"></i>' : '<i class="fas fa-venus text-pink-600"></i>';
         let cor = a.sexo === 'M' ? 'border-blue-500 bg-blue-50' : 'border-green-500 bg-green-50';
         
         html += `<div class="tree-node w-48 ${cor} shadow-lg z-10 mb-4 text-center rounded-xl p-3 border-4"><div class="text-[10px] text-gray-500 uppercase font-bold tracking-widest mb-1">ANIMAL</div><span class="text-gray-900 text-xl font-black">${ic} ${brinco}</span></div>`;
 
-        // BLOCO DESCENDENTES (MÚLTIPLAS GERAÇÕES)
         let htmlDescendentes = buildDescendentesHTML(brinco, 0);
         
         if (htmlDescendentes !== '') {
@@ -702,15 +707,14 @@
 
     function fecharGenealogia() {
         const m = document.getElementById('modal-genealogia');
-        m.classList.remove('opacity-0');
+        m.classList.add('opacity-0');
         setTimeout(() => m.classList.add('hidden'), 300);
     }
 
     // --- PRONTUÁRIO INDIVIDUAL (C/ FOTO E GENEALOGIA) ---
     function pesquisarProntuario() {
         const b = formatarBrincoUI_internal(document.getElementById('input-busca-prontuario').value); const res = document.getElementById('resultado-prontuario');
-        if (!cache || !cache.animais || !cache.animais[b]) { res.innerHTML = `<div class="p-4 bg-yellow-50 text-yellow-800 rounded-xl border border-yellow-200 text-center font-bold"><i class="fas fa-search-minus text-2xl block mb-2"></i>O brinco ${b} não possui registos no Diário.</div>`;
-        return; }
+        if (!cache || !cache.animais || !cache.animais[b]) { res.innerHTML = `<div class="p-4 bg-yellow-50 text-yellow-800 rounded-xl border border-yellow-200 text-center font-bold"><i class="fas fa-search-minus text-2xl block mb-2"></i>O brinco ${b} não possui registos no Diário.</div>`; return; }
         const animal = cache.animais[b]; const evs = animal.eventos || []; const hoje = new Date(); hoje.setHours(0,0,0,0);
 
         let fotoPerfilUrl = null;
@@ -752,6 +756,11 @@
 
         let headerFotoHTML = fotoPerfilUrl ? `<img src="${fotoPerfilUrl}" class="foto-perfil float-right ml-4 cursor-pointer" onclick="abrirModalFoto('${fotoPerfilUrl}')" alt="Foto">` : `<div class="foto-perfil float-right ml-4 flex items-center justify-center bg-gray-200 text-gray-400"><i class="fas fa-cow text-2xl"></i></div>`;
 
+        let painelResumoHTML = '';
+        if (!animal.descartada) {
+            painelResumoHTML = `<div class="grid grid-cols-2 gap-2 mt-2 text-center"><div class="bg-blue-50 border border-blue-100 p-2 rounded-xl"><div class="text-[9px] uppercase font-bold text-gray-500">Reprodutivo</div><div class="font-black text-blue-700 text-sm">${animal.statusRep}</div></div><div class="bg-green-50 border border-green-100 p-2 rounded-xl"><div class="text-[9px] uppercase font-bold text-gray-500">Categoria</div><div class="font-black text-green-700 text-sm">${calcularCategoria(animal)}</div></div></div>`;
+        }
+
         res.innerHTML = `
             <div class="bg-white p-5 rounded-2xl shadow-md border-t-4 ${animal.descartada ? 'border-gray-500' : 'border-green-600'}">
                 <div class="mb-4 pb-4 border-b border-gray-100 clearfix">
@@ -763,7 +772,7 @@
                         <div class="text-[10px] font-bold text-gray-400 uppercase inline-block ml-2"><i class="fas ${animal.sexo==='F'?'fa-venus text-pink-500':'fa-mars text-blue-500'} mr-1"></i>${animal.sexo}</div>
                     </div>
                 </div>
-                ${!animal.descartada && animal.sexo === 'F' ? `<div class="grid grid-cols-2 gap-2 mt-2 text-center"><div class="bg-blue-50 border border-blue-100 p-2 rounded-xl"><div class="text-[9px] uppercase font-bold text-gray-500">Reprodutivo</div><div class="font-black text-blue-700 text-sm">${animal.statusRep}</div></div><div class="bg-green-50 border border-green-100 p-2 rounded-xl"><div class="text-[9px] uppercase font-bold text-gray-500">Produtivo</div><div class="font-black text-green-700 text-sm">${animal.statusProd}</div></div></div>` : ''}
+                ${painelResumoHTML}
                 <button onclick="abrirGenealogia('${animal.brinco}')" class="mt-4 w-full py-3 bg-gray-800 text-white text-xs font-black uppercase rounded-xl tracking-widest shadow-sm hover:bg-gray-700"><i class="fas fa-project-diagram mr-2"></i>Ver Árvore Genealógica</button>
                 ${statLactHTML}
                 ${criasHTML}
@@ -772,94 +781,87 @@
         `;
     }
 
-// --- DASHBOARD INVENTÁRIO ---
-    function toggleListaDetalhada() {
-        document.getElementById('lista-detalhada-container').classList.toggle('hidden');
-        document.getElementById('lista-descartados-container').classList.add('hidden');
-    }
-
-    function toggleListaDescartados() {
-        document.getElementById('lista-descartados-container').classList.toggle('hidden');
-        document.getElementById('lista-detalhada-container').classList.add('hidden');
-    }
+    // --- DASHBOARD INVENTÁRIO E RELATÓRIO ---
+    function toggleListaDetalhada() { document.getElementById('lista-detalhada-container').classList.toggle('hidden'); document.getElementById('lista-descartados-container').classList.add('hidden'); }
+    function toggleListaDescartados() { document.getElementById('lista-descartados-container').classList.toggle('hidden'); document.getElementById('lista-detalhada-container').classList.add('hidden'); }
 
     function atualizarListaDetalhada(dono) {
-        let html = '<table class="w-full text-[10px] text-left whitespace-nowrap"><thead class="bg-gray-50 uppercase text-gray-400"><tr><th class="p-2 border-b">Brinco</th><th class="p-2 border-b">Idade ▼</th><th class="p-2 border-b">Cat.</th><th class="p-2 border-b">Reprod.</th><th class="p-2 border-b">Prod.</th><th class="p-2 border-b text-center">DEL</th></tr></thead><tbody class="divide-y divide-gray-100">';
-        
-        let ativos = [];
-        for(let b in cache.animais) {
-            let a = cache.animais[b];
-            if(a.descartada || a.sexo !== 'F') continue;
-            if(dono !== 'todos' && a.proprietario.toLowerCase() !== dono.toLowerCase()) continue;
-            ativos.push(a);
+        let html = '<table class="w-full text-[10px] text-left whitespace-nowrap"><thead class="bg-gray-50 uppercase text-gray-400"><tr><th class="p-2 border-b">Brinco</th><th class="p-2 border-b">Idade ▼</th><th class="p-2 border-b">Sexo</th><th class="p-2 border-b">Cat.</th><th class="p-2 border-b">Reprod.</th><th class="p-2 border-b text-center">DEL</th></tr></thead><tbody class="divide-y divide-gray-100">';
+        let ativos = []; 
+        for(let b in cache.animais) { 
+            let a = cache.animais[b]; 
+            // Agora EXIBE Machos também (não filtramos por a.sexo === 'F')
+            if(!a.descartada && (dono === 'todos' || a.proprietario.toLowerCase() === dono.toLowerCase())) ativos.push(a); 
         }
-        
-        // Ordenar ativos por idade (do mais velho para o mais novo)
         ativos.sort((a, b) => b.idadeDias - a.idadeDias);
-
-        ativos.forEach(a => {
-            let cat = a.dtUltimoParto ? 'Vaca' : 'Novilha';
-            let del = '-';
-            if(a.statusProd === 'Lactando' && a.dtUltimoParto) {
-                 del = Math.floor((new Date() - new Date(a.dtUltimoParto)) / 86400000);
-            }
-            html += `<tr class="hover:bg-gray-50"><td class="p-2 font-black brinco-link" onclick="irParaProntuario('${a.brinco}')">${a.brinco}</td><td class="p-2 text-gray-600">${getIdadeFormatada(a.idadeDias)}</td><td class="p-2 text-gray-600 font-bold">${cat}</td><td class="p-2 text-gray-600">${a.statusRep}</td><td class="p-2 text-gray-600">${a.statusProd}</td><td class="p-2 font-black text-center text-gray-800">${del}</td></tr>`;
+        ativos.forEach(a => { 
+            let cat = calcularCategoria(a);
+            let del = (a.statusProd === 'Lactando' && a.dtUltimoParto) ? Math.floor((new Date() - new Date(a.dtUltimoParto)) / 86400000) : '-'; 
+            let sx = a.sexo === 'F' ? '<i class="fas fa-venus text-pink-500"></i> F' : '<i class="fas fa-mars text-blue-500"></i> M';
+            html += `<tr class="hover:bg-gray-50"><td class="p-2 font-black brinco-link" onclick="irParaProntuario('${a.brinco}')">${a.brinco}</td><td class="p-2 text-gray-600">${getIdadeFormatada(a.idadeDias)}</td><td class="p-2 text-gray-600 font-bold">${sx}</td><td class="p-2 text-gray-600 font-bold">${cat}</td><td class="p-2 text-gray-600">${a.statusRep}</td><td class="p-2 font-black text-center text-gray-800">${del}</td></tr>`; 
         });
-        html += '</tbody></table>';
-        document.getElementById('tabela-detalhada-body').innerHTML = html;
+        document.getElementById('tabela-detalhada-body').innerHTML = html + '</tbody></table>';
     }
 
     function atualizarListaDescartados(dono) {
         let html = '<table class="w-full text-[10px] text-left whitespace-nowrap"><thead class="bg-red-50 uppercase text-red-400"><tr><th class="p-2 border-b">Brinco</th><th class="p-2 border-b">Data Saída</th><th class="p-2 border-b">Motivo</th><th class="p-2 border-b">Sexo</th><th class="p-2 border-b">Idade (Na Saída)</th></tr></thead><tbody class="divide-y divide-red-100">';
-        
-        let descartados = [];
-        for(let b in cache.animais) {
-            let a = cache.animais[b];
-            if(!a.descartada) continue;
-            if(dono !== 'todos' && a.proprietario.toLowerCase() !== dono.toLowerCase()) continue;
-            descartados.push(a);
-        }
-        
-        // Ordenar descartados pela data de saída (mais recente primeiro)
-        descartados.sort((a, b) => {
-            let evtA = [...a.eventos].reverse().find(e => ["saida", "morte", "venda", "consumo"].includes(e.tipo.toLowerCase()));
-            let evtB = [...b.eventos].reverse().find(e => ["saida", "morte", "venda", "consumo"].includes(e.tipo.toLowerCase()));
-            let dataA = evtA ? evtA.data : 0;
-            let dataB = evtB ? evtB.data : 0;
-            return dataB - dataA;
-        });
-
-        descartados.forEach(a => {
-            // Localizar o evento exato de saída para descobrir o motivo e a data
+        let desc = []; for(let b in cache.animais) { let a = cache.animais[b]; if(a.descartada && (dono === 'todos' || a.proprietario.toLowerCase() === dono.toLowerCase())) desc.push(a); }
+        desc.sort((a, b) => { let evtA = [...a.eventos].reverse().find(e => ["saida", "morte", "venda", "consumo"].includes(e.tipo.toLowerCase())); let evtB = [...b.eventos].reverse().find(e => ["saida", "morte", "venda", "consumo"].includes(e.tipo.toLowerCase())); return (evtB ? evtB.data : 0) - (evtA ? evtA.data : 0); });
+        desc.forEach(a => {
             let evtSaida = [...a.eventos].reverse().find(e => ["saida", "morte", "venda", "consumo"].includes(e.tipo.toLowerCase()));
-            let dataSaida = evtSaida ? new Date(evtSaida.data) : null;
-            let motivo = evtSaida ? evtSaida.tipo : 'Desconhecido';
-            
-            // Calcular a idade "congelada" no momento em que o animal saiu
-            let idadeNaSaida = "N/A";
-            if (a.nascimento && dataSaida) {
-                let diasVivos = Math.floor((dataSaida - a.nascimento) / 86400000);
-                idadeNaSaida = getIdadeFormatada(diasVivos);
-            }
-            
-            let dataStr = dataSaida ? dataSaida.toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit', year:'numeric'}) : '-';
-            
-            html += `<tr class="hover:bg-red-50"><td class="p-2 font-black brinco-link" onclick="irParaProntuario('${a.brinco}')">${a.brinco}</td><td class="p-2 text-gray-600">${dataStr}</td><td class="p-2 text-gray-600 uppercase font-bold">${motivo}</td><td class="p-2 text-gray-600">${a.sexo}</td><td class="p-2 text-gray-600">${idadeNaSaida}</td></tr>`;
+            let dSaida = evtSaida ? new Date(evtSaida.data) : null;
+            let idSaida = (a.nascimento && dSaida) ? getIdadeFormatada(Math.floor((dSaida - a.nascimento) / 86400000)) : "N/A";
+            html += `<tr class="hover:bg-red-50"><td class="p-2 font-black brinco-link" onclick="irParaProntuario('${a.brinco}')">${a.brinco}</td><td class="p-2">${dSaida ? dSaida.toLocaleDateString('pt-BR') : '-'}</td><td class="p-2 font-bold uppercase">${evtSaida ? evtSaida.tipo : '-'}</td><td class="p-2">${a.sexo}</td><td class="p-2">${idSaida}</td></tr>`;
         });
-        html += '</tbody></table>';
-        document.getElementById('tabela-descartados-body').innerHTML = html;
+        document.getElementById('tabela-descartados-body').innerHTML = html + '</tbody></table>';
+    }
+
+    function gerarRelatorioImpressao() {
+        let html = '<html><head><title>Relatório do Rebanho</title><style>body { font-family: Arial, sans-serif; padding: 20px; } table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 12px; } th, td { border: 1px solid #ddd; padding: 6px; text-align: left; } th { background-color: #f4f4f4; } h2 { margin-top: 30px; border-bottom: 2px solid #000; padding-bottom: 5px; font-size: 16px;} h1 { font-size: 20px; text-transform: uppercase; }</style></head><body>';
+        html += `<h1>Relatório de Inventário - ${donoAtual.toUpperCase()}</h1>`;
+        html += `<p>Gerado em: ${new Date().toLocaleDateString('pt-BR')}</p>`;
+
+        let faixas = {
+            'ate_1': { titulo: 'Animais até 1 ano', animais: [] },
+            'de_1_a_2': { titulo: 'Animais de 1 a 2 anos', animais: [] },
+            'de_2_a_3': { titulo: 'Animais de 2 a 3 anos', animais: [] },
+            'mais_de_3': { titulo: 'Animais com mais de 3 anos', animais: [] }
+        };
+
+        for (let b in cache.animais) {
+            let a = cache.animais[b];
+            if (a.descartada) continue;
+            if (donoAtual !== 'todos' && a.proprietario.toLowerCase() !== donoAtual.toLowerCase()) continue;
+            faixas[determinarFaixaEtariaJs(a.idadeDias)].animais.push(a);
+        }
+
+        for (let k in faixas) {
+            let grupo = faixas[k];
+            if (grupo.animais.length === 0) continue;
+            grupo.animais.sort((a,b) => b.idadeDias - a.idadeDias);
+
+            html += `<h2>${grupo.titulo} (${grupo.animais.length} animais)</h2>`;
+            html += `<table><thead><tr><th>Brinco</th><th>Data Nasc.</th><th>Idade</th><th>Sexo</th><th>Categoria</th></tr></thead><tbody>`;
+            grupo.animais.forEach(a => {
+                let dtNasc = a.nascimento ? new Date(a.nascimento).toLocaleDateString('pt-BR') : 'Desconhecida';
+                html += `<tr><td>${a.brinco}</td><td>${dtNasc}</td><td>${getIdadeFormatada(a.idadeDias)}</td><td>${a.sexo}</td><td>${calcularCategoria(a)}</td></tr>`;
+            });
+            html += `</tbody></table>`;
+        }
+
+        html += '<script>window.onload = function() { setTimeout(function(){ window.print(); window.close(); }, 500); }<\/script></body></html>';
+        
+        let win = window.open('', '_blank');
+        win.document.write(html);
+        win.document.close();
     }
 
     function renderDashboard(dono) {
-        if (!cache || !cache.dashboard) return;
-        document.querySelectorAll('.btn-filtro').forEach(b => b.classList.remove('btn-filter-active')); document.getElementById('btn-filtro-' + dono).classList.add('btn-filter-active');
-        const db = cache.dashboard; const p = (dono !== 'todos') ? db.proprietarios[dono] ||
-        { femeas: {}, machos: {} } : Object.values(db.proprietarios).reduce((a,c)=>{ for(let k in a.femeas){ a.femeas[k]+=c.femeas[k]||0; a.machos[k]+=c.machos[k]||0; } return a; }, {femeas:{ate_1:0,de_1_a_2:0,de_2_a_3:0,mais_de_3:0},machos:{ate_1:0,de_1_a_2:0,de_2_a_3:0,mais_de_3:0}});
+        if (!cache) return; donoAtual = dono; document.querySelectorAll('.btn-filtro').forEach(b => b.classList.remove('btn-filter-active')); document.getElementById('btn-filtro-' + dono).classList.add('btn-filter-active');
+        const db = cache.dashboard; const p = (dono !== 'todos') ? db.proprietarios[dono] || { femeas: {}, machos: {} } : Object.values(db.proprietarios).reduce((a,c)=>{ for(let k in a.femeas){ a.femeas[k]+=c.femeas[k]||0; a.machos[k]+=c.machos[k]||0; } return a; }, {femeas:{ate_1:0,de_1_a_2:0,de_2_a_3:0,mais_de_3:0},machos:{ate_1:0,de_1_a_2:0,de_2_a_3:0,mais_de_3:0}});
         document.getElementById('lista-demografia').innerHTML = Object.entries({ ate_1: "Até 1 ano", de_1_a_2: "1 a 2 anos", de_2_a_3: "2 a 3 anos", mais_de_3: "Mais de 3 anos" }).map(([k,v]) => `<tr class="hover:bg-gray-50"><td class="p-3 font-medium text-xs text-gray-600">${v}</td><td class="p-3 text-center font-black text-green-700">${p.femeas[k]||0}</td><td class="p-3 text-center font-black text-blue-700">${p.machos[k]||0}</td></tr>`).join('');
-        document.getElementById('val-lp').innerText = db.matriz.lactandoPrenhe || 0; document.getElementById('val-lv').innerText = db.matriz.lactandoVazia || 0; document.getElementById('val-sp').innerText = db.matriz.secaPrenhe || 0; document.getElementById('val-sv').innerText = db.matriz.secaVazia || 0;
-document.getElementById('val-del').innerText = (db.totalLactando > 0 ? Math.round(db.somaDEL / db.totalLactando) : 0) + " DEL Médio";
-        atualizarListaDetalhada(dono);
-        atualizarListaDescartados(dono);
+        document.getElementById('val-lp').innerText = db.matriz.lactandoPrenhe || 0; document.getElementById('val-lv').innerText = db.matriz.lactandoVazia || 0; document.getElementById('val-sp').innerText = db.matriz.secaPrenhe || 0; document.getElementById('val-sv').innerText = db.matriz.secaVazia || 0; document.getElementById('val-del').innerText = (db.totalLactando > 0 ? Math.round(db.somaDEL / db.totalLactando) : 0) + " DEL Médio";
+        atualizarListaDetalhada(dono); atualizarListaDescartados(dono);
     }
 
     // --- LISTA DE AÇÕES ---
@@ -1077,7 +1079,7 @@ document.getElementById('val-del').innerText = (db.totalLactando > 0 ? Math.roun
             drawChart('chartPreco', 'line', { labels: lblX, datasets: [ { label: 'Preço (R$)', data: aPrc, borderColor: '#059669', backgroundColor: 'rgba(16, 185, 129, 0.2)', fill: true, spanGaps: true } ] }, { responsive: true, plugins: { legend: { display: false } } });
         }
     }
-// --- SINCRONIZAÇÃO SMARTCOOP ---
+    // --- SINCRONIZAÇÃO SMARTCOOP ---
     async function sincronizarSmartcoop() {
         const senhaStorage = localStorage.getItem('vaquinhas_pwd') || "";
         document.getElementById('loading').classList.remove('hidden');
