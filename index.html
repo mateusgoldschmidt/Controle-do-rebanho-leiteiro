@@ -98,17 +98,17 @@
                 </div>
             </div>
             
-            <div class="flex gap-2 mt-4">
+            <div class="w-full flex gap-2 mt-4 mb-4">
                 <button onclick="toggleListaDetalhada()" class="flex-1 py-3 bg-gray-800 text-white font-black uppercase text-[10px] tracking-widest rounded-xl shadow-sm hover:bg-gray-700 transition"><i class="fas fa-list mr-2"></i>Ativos</button>
                 <button onclick="toggleListaDescartados()" class="flex-1 py-3 bg-red-50 text-red-700 border border-red-200 font-black uppercase text-[10px] tracking-widest rounded-xl shadow-sm hover:bg-red-100 transition"><i class="fas fa-times-circle mr-2"></i>Inativos</button>
                 <button onclick="gerarRelatorioImpressao()" class="flex-1 py-3 bg-blue-600 text-white font-black uppercase text-[10px] tracking-widest rounded-xl shadow-sm hover:bg-blue-700 transition"><i class="fas fa-print mr-2"></i>Relatório</button>
             </div>
             
-            <div id="lista-detalhada-container" class="hidden mt-3 bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto">
+            <div id="lista-detalhada-container" class="hidden mt-3 bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto w-full">
                 <div id="tabela-detalhada-body"></div>
             </div>
 
-            <div id="lista-descartados-container" class="hidden mt-3 bg-white rounded-xl shadow-sm border border-red-200 overflow-x-auto">
+            <div id="lista-descartados-container" class="hidden mt-3 bg-white rounded-xl shadow-sm border border-red-200 overflow-x-auto w-full">
                 <div id="tabela-descartados-body"></div>
             </div>
         </section>
@@ -184,7 +184,6 @@
                 <button id="btn-acao-tempo-null" class="btn-acao-tempo flex-1 py-2 text-[10px] font-black uppercase tracking-wider rounded-lg border text-gray-400" onclick="setHorizonte(null)">Todo o Futuro</button>
             </div>
             <div id="lista-pendencias-inspetoria"></div>
-
             <div id="lista-acoes"></div>
             <div class="mt-4 mb-2">
                 <button id="btn-toggle-bezerros" onclick="toggleBezerros()" class="w-full py-3.5 bg-pink-50 text-pink-700 font-black uppercase tracking-widest text-[10px] rounded-xl border border-pink-200 shadow-sm transition-all"><i class="fas fa-baby-carriage mr-2"></i>Exibir Aleitamento e B19</button>
@@ -245,11 +244,19 @@
                         </label>
                         <div id="campos-cria" class="hidden grid grid-cols-2 gap-3 pt-3 border-t border-blue-200 mt-2">
                             <div><label class="block text-[10px] font-black text-gray-500 uppercase mb-1">Brinco Sugerido</label><input type="text" inputmode="numeric" id="brinco-cria" onblur="formatarBrincoUI(this)" class="w-full p-2 bg-white border border-blue-100 rounded-lg font-bold outline-none focus:border-blue-500 text-blue-800"></div>
-                            <div><label class="block text-[10px] font-black text-gray-500 uppercase mb-1">Proprietário</label><select id="proprietario-cria" class="w-full p-2 bg-white border border-blue-100 rounded-lg font-bold outline-none focus:border-blue-500"><option value="Mateus">Mateus</option><option value="Alberto">Alberto</option></select></div>
+                            <div><label class="block text-[10px] font-black text-gray-500 uppercase mb-1">Proprietário</label><input type="text" id="proprietario-cria" class="w-full p-2 bg-white border border-blue-100 rounded-lg font-bold outline-none focus:border-blue-500 text-gray-800"></div>
                         </div>
                     </div>
 
-                    <div id="cont-d1"><label id="lab-d1" class="block text-[10px] font-black text-gray-400 uppercase mb-1">Touro / Sémen</label><input type="text" id="info1" class="w-full p-3 bg-gray-50 border-2 border-gray-200 rounded-xl font-bold outline-none focus:border-green-500 focus:bg-white transition-colors"></div>
+                    <div id="cont-d1">
+                        <label id="lab-d1" class="block text-[10px] font-black text-gray-400 uppercase mb-1">Touro / Sémen</label>
+                        <input type="text" id="info1" class="w-full p-3 bg-gray-50 border-2 border-gray-200 rounded-xl font-bold outline-none focus:border-green-500 focus:bg-white transition-colors">
+                        <select id="info1-sexo" class="hidden w-full p-4 bg-gray-50 border-2 border-gray-200 rounded-xl font-bold focus:border-green-500 focus:bg-white outline-none transition-colors">
+                            <option value="F">Fêmea</option>
+                            <option value="M">Macho</option>
+                        </select>
+                    </div>
+                    
                     <div id="cont-d2" class="hidden"><label id="lab-d2" class="block text-[10px] font-black text-gray-400 uppercase mb-1">Info 2</label><input type="text" id="info2" class="w-full p-3 bg-gray-50 border-2 border-gray-200 rounded-xl font-bold outline-none focus:border-green-500 focus:bg-white transition-colors"></div>
                     <div id="cont-d3" class="hidden"><label id="lab-d3" class="block text-[10px] font-black text-gray-400 uppercase mb-1">Info 3</label><input type="text" id="info3" class="w-full p-3 bg-gray-50 border-2 border-gray-200 rounded-xl font-bold outline-none focus:border-green-500 focus:bg-white transition-colors"></div>
 
@@ -446,24 +453,35 @@
         document.getElementById('box-erro-manejo').classList.add('hidden');
         const ev = document.getElementById('evento').value, d1 = document.getElementById('cont-d1'), l1 = document.getElementById('lab-d1'), d2 = document.getElementById('cont-d2'), l2 = document.getElementById('lab-d2'), d3 = document.getElementById('cont-d3'), l3 = document.getElementById('lab-d3'), lBrinco = document.getElementById('lab-brinco'), inInfo1 = document.getElementById('info1'), inBrinco = document.getElementById('brinco');
 
+        document.getElementById('info1').classList.remove('hidden');
+        document.getElementById('info1-sexo').classList.add('hidden');
+
         [d1, d2, d3, document.getElementById('bloco-parto-extra'), document.getElementById('bloco-foto')].forEach(c => c.classList.add('hidden'));
         lBrinco.innerText = "Brinco Principal"; inInfo1.removeAttribute("onblur"); inInfo1.removeAttribute("inputmode"); inInfo1.value = ""; document.getElementById('info2').value = ""; document.getElementById('info3').value = ""; document.getElementById('check-registrar-cria').checked = false; toggleCriaFields();
         document.getElementById('input-foto').value = ''; document.getElementById('preview-foto-container').style.display = 'none';
 
         switch(ev) {
-            case "Nascimento": configField(l1, d1, "Sexo (F/M)"); configField(l2, d2, "Brinco da Mãe"); configField(l3, d3, "Nome do Pai");
+            case "Nascimento": configField(l1, d1, "Sexo"); configField(l2, d2, "Brinco da Mãe"); configField(l3, d3, "Nome do Pai");
             if (cache && cache.dadosFormulario) inBrinco.value = cache.dadosFormulario.proximoBrinco; break;
-            case "Compra": configField(l1, d1, "Sexo (F/M)"); configField(l3, d3, "Proprietário Inicial"); if (cache && cache.dadosFormulario) inBrinco.value = cache.dadosFormulario.proximoBrinco; break;
+            case "Compra": configField(l1, d1, "Sexo"); configField(l3, d3, "Proprietário Inicial"); if (cache && cache.dadosFormulario) inBrinco.value = cache.dadosFormulario.proximoBrinco; break;
             case "Atualizar Foto": document.getElementById('bloco-foto').classList.remove('hidden'); break;
             case "Propriedade": configField(l1, d1, "Novo Proprietário"); break;
             case "Inseminação": configField(l1, d1, "Touro / Sémen"); if (cache && cache.dadosFormulario && cache.dadosFormulario.machoMaisVelho) inInfo1.value = cache.dadosFormulario.machoMaisVelho; break;
             case "Secagem (Pré-Parto)": case "Secagem de Descarte": configField(l1, d1, "Antibiótico Usado"); break;
-            case "Parto": configField(l1, d1, "Sexo da Cria (F/M)"); document.getElementById('bloco-parto-extra').classList.remove('hidden'); break;
+            case "Parto": configField(l1, d1, "Sexo da Cria"); document.getElementById('bloco-parto-extra').classList.remove('hidden'); break;
             case "Saída": configField(l1, d1, "Motivo (Venda/Morte/Consumo)"); break;
             case "Troca de Brinco": lBrinco.innerText = "Brinco Antigo"; configField(l1, d1, "Novo Número"); inInfo1.setAttribute("onblur", "formatarBrincoUI(this)"); inInfo1.setAttribute("inputmode", "numeric"); break;
         }
     }
-    function configField(lab, cont, text) { lab.innerText = text; cont.classList.remove('hidden'); }
+    
+    function configField(lab, cont, text) { 
+        lab.innerText = text; 
+        cont.classList.remove('hidden'); 
+        if(text.includes("Sexo")) {
+            document.getElementById('info1').classList.add('hidden');
+            document.getElementById('info1-sexo').classList.remove('hidden');
+        }
+    }
 
     // --- UPLOAD PARA CLOUDINARY ---
     function previewFoto(input) {
@@ -493,9 +511,12 @@
     function prepararSalvamento(e) {
         e.preventDefault(); document.getElementById('box-erro-manejo').classList.add('hidden');
         const ev = document.getElementById('evento').value, mainDataStr = document.getElementById('data').value;
-        let info1 = document.getElementById('info1').value, info2 = document.getElementById('info2').value, info3 = document.getElementById('info3').value;
+        
+        let info1 = document.getElementById('info1-sexo').classList.contains('hidden') ? document.getElementById('info1').value : document.getElementById('info1-sexo').value;
+        let info2 = document.getElementById('info2').value, info3 = document.getElementById('info3').value;
         let mainBrincoRaw = document.getElementById('brinco').value;
         let mainBrinco = formatarBrincoUI_internal(mainBrincoRaw);
+        
         if (!mainBrinco && (ev === "Nascimento" || ev === "Compra") && cache && cache.dadosFormulario) mainBrinco = cache.dadosFormulario.proximoBrinco;
 
         if (cache && cache.animais) {
@@ -790,7 +811,6 @@
         let ativos = []; 
         for(let b in cache.animais) { 
             let a = cache.animais[b]; 
-            // Agora EXIBE Machos também (não filtramos por a.sexo === 'F')
             if(!a.descartada && (dono === 'todos' || a.proprietario.toLowerCase() === dono.toLowerCase())) ativos.push(a); 
         }
         ativos.sort((a, b) => b.idadeDias - a.idadeDias);
@@ -798,7 +818,12 @@
             let cat = calcularCategoria(a);
             let del = (a.statusProd === 'Lactando' && a.dtUltimoParto) ? Math.floor((new Date() - new Date(a.dtUltimoParto)) / 86400000) : '-'; 
             let sx = a.sexo === 'F' ? '<i class="fas fa-venus text-pink-500"></i> F' : '<i class="fas fa-mars text-blue-500"></i> M';
-            html += `<tr class="hover:bg-gray-50"><td class="p-2 font-black brinco-link" onclick="irParaProntuario('${a.brinco}')">${a.brinco}</td><td class="p-2 text-gray-600">${getIdadeFormatada(a.idadeDias)}</td><td class="p-2 text-gray-600 font-bold">${sx}</td><td class="p-2 text-gray-600 font-bold">${cat}</td><td class="p-2 text-gray-600">${a.statusRep}</td><td class="p-2 font-black text-center text-gray-800">${del}</td></tr>`; 
+            
+            let statusRepFormatado = a.statusRep;
+            if (a.sexo === 'M') { statusRepFormatado = '-'; }
+            else if (a.sexo === 'F' && a.partosContagem === 0 && a.tentativasIA === 0) { statusRepFormatado = '-'; }
+
+            html += `<tr class="hover:bg-gray-50"><td class="p-2 font-black brinco-link" onclick="irParaProntuario('${a.brinco}')">${a.brinco}</td><td class="p-2 text-gray-600">${getIdadeFormatada(a.idadeDias)}</td><td class="p-2 text-gray-600 font-bold">${sx}</td><td class="p-2 text-gray-600 font-bold">${cat}</td><td class="p-2 text-gray-600">${statusRepFormatado}</td><td class="p-2 font-black text-center text-gray-800">${del}</td></tr>`; 
         });
         document.getElementById('tabela-detalhada-body').innerHTML = html + '</tbody></table>';
     }
@@ -817,9 +842,23 @@
     }
 
     function gerarRelatorioImpressao() {
-        let html = '<html><head><title>Relatório do Rebanho</title><style>body { font-family: Arial, sans-serif; padding: 20px; } table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 12px; } th, td { border: 1px solid #ddd; padding: 6px; text-align: left; } th { background-color: #f4f4f4; } h2 { margin-top: 30px; border-bottom: 2px solid #000; padding-bottom: 5px; font-size: 16px;} h1 { font-size: 20px; text-transform: uppercase; }</style></head><body>';
-        html += `<h1>Relatório de Inventário - ${donoAtual.toUpperCase()}</h1>`;
-        html += `<p>Gerado em: ${new Date().toLocaleDateString('pt-BR')}</p>`;
+        let html = '<html><head><title>Relatório do Rebanho</title><style>body { font-family: Arial, sans-serif; padding: 20px; color:#111827; } table { width: 100%; border-collapse: collapse; margin-bottom: 25px; font-size: 11px; } th, td { border: 1px solid #cbd5e1; padding: 6px; text-align: left; } th { background-color: #f8fafc; font-weight: bold; } h2 { margin-top: 25px; border-bottom: 2px solid #1e293b; padding-bottom: 4px; font-size: 14px; color:#1e293b;} h1 { font-size: 18px; text-transform: uppercase; margin-bottom:2px; } .meta-box { font-size: 11px; background:#f1f5f9; padding: 12px; border-radius: 8px; margin-bottom: 15px; border:1px solid #e2e8f0; line-height:1.5; }</style></head><body>';
+        
+        let nomeProdutor = "Todos os Proprietários";
+        let dadosIdentificacao = "Filtro Geral Selecionado";
+        
+        if (donoAtual !== 'todos' && cache.configProdutores && cache.configProdutores[donoAtual]) {
+            let pData = cache.configProdutores[donoAtual];
+            nomeProdutor = pData.nome;
+            dadosIdentificacao = `<b>CPF:</b> ${pData.cpf} &nbsp;&bull;&nbsp; <b>Inscrição Estadual:</b> ${pData.ie}`;
+        }
+
+        html += `<h1>Relatório de Inventário do Rebanho</h1>`;
+        html += `<div class="meta-box">`;
+        html += `<b>Proprietário:</b> ${nomeProdutor}<br>`;
+        html += `${dadosIdentificacao}<br>`;
+        html += `<b>Data de Emissão:</b> ${new Date().toLocaleDateString('pt-BR')}`;
+        html += `</div>`;
 
         let faixas = {
             'ate_1': { titulo: 'Animais até 1 ano', animais: [] },
@@ -840,16 +879,19 @@
             if (grupo.animais.length === 0) continue;
             grupo.animais.sort((a,b) => b.idadeDias - a.idadeDias);
 
-            html += `<h2>${grupo.titulo} (${grupo.animais.length} animais)</h2>`;
-            html += `<table><thead><tr><th>Brinco</th><th>Data Nasc.</th><th>Idade</th><th>Sexo</th><th>Categoria</th></tr></thead><tbody>`;
+            let qtdFemeas = grupo.animais.filter(a => a.sexo === 'F').length;
+            let qtdMachos = grupo.animais.filter(a => a.sexo === 'M').length;
+
+            html += `<h2>${grupo.titulo} (${grupo.animais.length} animais: ${qtdFemeas} Fêmeas, ${qtdMachos} Machos)</h2>`;
+            html += `<table><thead><tr><th>Brinco</th><th>Data Nasc.</th><th>Idade Atual</th><th>Sexo</th><th>Categoria Sistemática</th></tr></thead><tbody>`;
             grupo.animais.forEach(a => {
                 let dtNasc = a.nascimento ? new Date(a.nascimento).toLocaleDateString('pt-BR') : 'Desconhecida';
-                html += `<tr><td>${a.brinco}</td><td>${dtNasc}</td><td>${getIdadeFormatada(a.idadeDias)}</td><td>${a.sexo}</td><td>${calcularCategoria(a)}</td></tr>`;
+                html += `<tr><td><b>${a.brinco}</b></td><td>${dtNasc}</td><td>${getIdadeFormatada(a.idadeDias)}</td><td>${a.sexo}</td><td>${calcularCategoria(a)}</td></tr>`;
             });
             html += `</tbody></table>`;
         }
 
-        html += '<script>window.onload = function() { setTimeout(function(){ window.print(); window.close(); }, 500); }<\/script></body></html>';
+        html += '<script>window.onload = function() { setTimeout(function(){ window.print(); window.close(); }, 400); }' + '</sc' + 'ript></body></html>';
         
         let win = window.open('', '_blank');
         win.document.write(html);
@@ -857,7 +899,9 @@
     }
 
     function renderDashboard(dono) {
-        if (!cache) return; donoAtual = dono; document.querySelectorAll('.btn-filtro').forEach(b => b.classList.remove('btn-filter-active')); document.getElementById('btn-filtro-' + dono).classList.add('btn-filter-active');
+        if (!cache) return; 
+        donoAtual = dono; 
+        document.querySelectorAll('.btn-filtro').forEach(b => b.classList.remove('btn-filter-active')); document.getElementById('btn-filtro-' + dono).classList.add('btn-filter-active');
         const db = cache.dashboard; const p = (dono !== 'todos') ? db.proprietarios[dono] || { femeas: {}, machos: {} } : Object.values(db.proprietarios).reduce((a,c)=>{ for(let k in a.femeas){ a.femeas[k]+=c.femeas[k]||0; a.machos[k]+=c.machos[k]||0; } return a; }, {femeas:{ate_1:0,de_1_a_2:0,de_2_a_3:0,mais_de_3:0},machos:{ate_1:0,de_1_a_2:0,de_2_a_3:0,mais_de_3:0}});
         document.getElementById('lista-demografia').innerHTML = Object.entries({ ate_1: "Até 1 ano", de_1_a_2: "1 a 2 anos", de_2_a_3: "2 a 3 anos", mais_de_3: "Mais de 3 anos" }).map(([k,v]) => `<tr class="hover:bg-gray-50"><td class="p-3 font-medium text-xs text-gray-600">${v}</td><td class="p-3 text-center font-black text-green-700">${p.femeas[k]||0}</td><td class="p-3 text-center font-black text-blue-700">${p.machos[k]||0}</td></tr>`).join('');
         document.getElementById('val-lp').innerText = db.matriz.lactandoPrenhe || 0; document.getElementById('val-lv').innerText = db.matriz.lactandoVazia || 0; document.getElementById('val-sp').innerText = db.matriz.secaPrenhe || 0; document.getElementById('val-sv').innerText = db.matriz.secaVazia || 0; document.getElementById('val-del').innerText = (db.totalLactando > 0 ? Math.round(db.somaDEL / db.totalLactando) : 0) + " DEL Médio";
