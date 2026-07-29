@@ -216,9 +216,9 @@
                             <option value="Secagem (Pré-Parto)">Secagem (Pré-Parto)</option>
                             <option value="Encerramento Reprodutivo">Vazia (Desistência IA)</option>
                             <option value="Secagem de Descarte">Secagem de Descarte (Secada)</option>
-                            <option value="Nascimento">Nascimento na Quinta</option>
+                            <option value="Nascimento">Inclusão de bezerro</option>
                             <option value="Compra">Compra de Animal</option>
-                            <option value="Atualizar Foto">📸 Atualizar Foto do Animal</option>
+                            <option value="Atualizar Foto">Atualizar Foto do Animal</option>
                             <option value="Vacina B19">Vacina B19</option>
                             <option value="Propriedade">Troca de Proprietário</option>
                             <option value="Saída">Saída (Venda/Morte/Consumo)</option>
@@ -325,15 +325,25 @@
     let variaveisSalvamentoTemporario = null;
     let donoAtual = 'todos';
 
-    // --- ARRANQUE E LOGIN ---
+// --- ARRANQUE E LOGIN ---
     document.addEventListener('DOMContentLoaded', () => {
         let hoje = new Date();
         document.getElementById('filtro-prod-mes').value = hoje.getMonth() + 1;
         document.getElementById('filtro-prod-ano').value = hoje.getFullYear();
         document.getElementById('data').valueAsDate = hoje;
 
+        window.history.replaceState({ janela: 'inventario' }, "", "#inventario");
+
         const savedPwd = localStorage.getItem('vaquinhas_pwd');
         if (savedPwd) { fecharTelaLogin(); carregarDadosForcado(savedPwd); }
+    });
+
+    window.addEventListener('popstate', (e) => {
+        if (e.state && e.state.janela) {
+            switchJanela(e.state.janela, false);
+        } else {
+            switchJanela('inventario', false);
+        }
     });
 
     function efetuarLogin(e) {
@@ -348,7 +358,7 @@
         const t = document.getElementById('tela-login'), a = document.getElementById('app-content');
         t.classList.add('opacity-0', 'pointer-events-none');
         setTimeout(() => { t.classList.add('hidden'); a.classList.remove('hidden'); setTimeout(() => a.classList.remove('opacity-0'), 50); }, 300);
-        switchJanela('inventario');
+        switchJanela('inventario', false);
     }
 
     function abrirTelaLogin(msgErro = null) {
@@ -363,10 +373,15 @@
 
     function fazerLogout() { abrirTelaLogin(); }
 
-    function switchJanela(id) {
+    function switchJanela(id, pushHistory = true) {
         document.querySelectorAll('.janela').forEach(j => j.classList.remove('ativa'));
         document.querySelectorAll('.btn-nav').forEach(b => b.classList.remove('btn-nav-active'));
-        document.getElementById('janela-' + id).classList.add('ativa'); document.getElementById('btn-nav-' + id).classList.add('btn-nav-active');
+        document.getElementById('janela-' + id).classList.add('ativa'); 
+        let btn = document.getElementById('btn-nav-' + id);
+        if(btn) btn.classList.add('btn-nav-active');
+
+        if (pushHistory) window.history.pushState({ janela: id }, "", "#" + id);
+
         if (!cache && localStorage.getItem('vaquinhas_pwd')) carregarDadosForcado(localStorage.getItem('vaquinhas_pwd'));
         else if (id === 'acoes') renderAcoes();
         else if (id === 'lancar') { document.getElementById('box-erro-manejo').classList.add('hidden'); atualizarCamposForm(); }
@@ -532,7 +547,7 @@
                 if (ev === "Inseminação" && animal.idadeDias < 365) return mostrarErroValidacao(`Inseminação Bloqueada: Esta bezerra possui apenas ${Math.floor(animal.idadeDias/30)} meses.`);
                 if (ev === "Parto") { if (animal.statusRep === "Vazia" && !animal.dtUltimaIA) return mostrarErroValidacao("Parto bloqueado: Não há registo prévio de Inseminação."); if (animal.dtUltimoParto && ((dEv.getTime() - animal.dtUltimoParto) / 86400000) < 260) return mostrarErroValidacao(`Intervalo biológico impossível. O último parto foi há menos de 260 dias.`); }
                 if (ev === "Secagem (Pré-Parto)") { if (animal.statusProd !== "Lactando") return mostrarErroValidacao("A vaca não está em lactação."); if (animal.statusRep !== "Prenhe" && animal.statusRep !== "Coberta") return mostrarErroValidacao("Secagem Pré-Parto exige fêmea prenhe ou coberta."); }
-                if (ev === "Encerramento Reprodutivo" && animal.statusRep !== "Coberta") return mostrarErroValidacao("A fêmea não possui registo de cobertura para desistir da IA.");
+                if (ev === "Encerramento Reprodutivo" && animal.statusRep !== "Coberta" && animal.statusRep !== "Prenhe") return mostrarErroValidacao("A fêmea não possui registo de cobertura ou prenhez para desistir da IA.");
                 if (ev === "Vacina B19" && animal.vacinaB19) return mostrarErroValidacao("Esta bezerra já possui a vacina B19 registada.");
                 if (ev === "Atualizar Foto" && !document.getElementById('input-foto').files[0]) return mostrarErroValidacao("Tem de escolher ou tirar uma foto primeiro.");
             }
@@ -751,7 +766,7 @@
         if (lactacoes.length > 0) {
             statLactHTML = `<h4 class="font-black text-[10px] text-gray-500 uppercase tracking-widest mt-6 mb-3"><i class="fas fa-chart-line mr-1"></i> Histórico Produtivo</h4><div class="space-y-3">`;
             lactacoes.forEach((L, idx) => {
-                let fim = L.dataSecagem ? L.dataSecagem : hoje; let del = Math.floor((fim - L.dataParto) / 86400000); let perSecoHtml = '';
+                let fim = L.dataSecagem ? L.dataSecagem : hoje; let del = Math.max(0, Math.floor((fim - L.dataParto) / 86400000)); let perSecoHtml = '';
                 if (L.dataSecagem && lactacoes[idx+1]) { let diasSecos = Math.floor((lactacoes[idx+1].dataParto - L.dataSecagem) / 86400000);
                 perSecoHtml = `<span class="bg-orange-100 text-orange-700 px-2 py-1 rounded">Período Seco: ${diasSecos}d</span>`; }
                 statLactHTML += `<div class="bg-gray-50 p-3 rounded-xl border border-gray-200 text-xs font-bold text-gray-600 flex justify-between items-center shadow-sm"><div><span class="text-blue-600 uppercase text-[10px] block mb-0.5">${idx+1}ª Lactação</span>DEL: <span class="text-gray-900">${del} dias</span> &bull;
@@ -816,7 +831,7 @@
         ativos.sort((a, b) => b.idadeDias - a.idadeDias);
         ativos.forEach(a => { 
             let cat = calcularCategoria(a);
-            let del = (a.statusProd === 'Lactando' && a.dtUltimoParto) ? Math.floor((new Date() - new Date(a.dtUltimoParto)) / 86400000) : '-'; 
+            let del = (a.statusProd === 'Lactando' && a.dtUltimoParto) ? Math.max(0, Math.floor((new Date() - new Date(a.dtUltimoParto)) / 86400000)) : '-'; 
             let sx = a.sexo === 'F' ? '<i class="fas fa-venus text-pink-500"></i> F' : '<i class="fas fa-mars text-blue-500"></i> M';
             
             let statusRepFormatado = a.statusRep;
@@ -941,8 +956,8 @@
             if (filtroAcoes.tipo === 'todos' || filtroAcoes.tipo === 'secagem') { h += card('Previsão Secagem', 'fas fa-leaf text-orange-600', 'border-orange-500', sec.map(s => `<div class="p-3 flex justify-between items-center hover:bg-gray-50"><span class="font-bold text-lg brinco-link" onclick="irParaProntuario('${s.brinco}')">${s.brinco}</span><div class="text-orange-600 font-black text-sm"><i class="far fa-calendar-alt mr-1"></i> ${new Date(s.data).toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'})}</div></div>`).join('') || '<p class="p-4 text-center text-gray-400 text-xs italic">Sem eventos no período.</p>'); }
             if (filtroAcoes.tipo === 'todos' || filtroAcoes.tipo === 'partos') { 
                 h += card('Previsão Partos', 'fas fa-baby-carriage text-red-600', 'border-red-600', part.map(p => {
-                    let antibio = ''; let a = cache.animais[p.brinco];
-                    if (a && a.eventos) { let ultSeca = [...a.eventos].reverse().find(e => e.tipo === 'secagem (pre-parto)'); if (ultSeca && ultSeca.info1) antibio = `<div class="text-[9px] text-orange-500 font-black uppercase mt-1"><i class="fas fa-pills text-orange-400 mr-1"></i>${ultSeca.info1}</div>`; }
+                    // Agora puxa o antibiótico embutido no relatorio.partos (só exibe se a vaca JÁ estiver seca)
+                    let antibio = p.atb ? `<div class="text-[9px] text-orange-500 font-black uppercase mt-1"><i class="fas fa-pills text-orange-400 mr-1"></i>${p.atb}</div>` : '';
                     return `<div class="p-3 flex justify-between items-center hover:bg-gray-50"><div><span class="font-bold text-lg brinco-link" onclick="irParaProntuario('${p.brinco}')">${p.brinco}</span><span class="text-[9px] bg-gray-200 px-2 py-0.5 rounded font-black ml-1">${p.cat}</span>${antibio}</div><div class="text-red-600 font-black text-sm"><i class="far fa-calendar-alt mr-1"></i> ${new Date(p.data).toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'})}</div></div>`;
                 }).join('') || '<p class="p-4 text-center text-gray-400 text-xs italic">Sem eventos no período.</p>');
             }
@@ -951,7 +966,7 @@
                 h += card('Novilhas Aptas (IA)', 'fas fa-venus text-teal-600', 'border-teal-600', nApt.map(n => { let idS = cache.animais[n.brinco] ? getIdadeFormatada(cache.animais[n.brinco].idadeDias) : 'N/A'; return `<div class="p-3 flex justify-between items-center hover:bg-gray-50"><span class="font-bold text-lg brinco-link" onclick="irParaProntuario('${n.brinco}')">${n.brinco}</span><span class="text-[10px] font-black text-teal-700 bg-teal-50 px-2 py-1 rounded border">${idS}</span></div>`; }).join('') || '<p class="p-4 text-center text-gray-400 text-xs italic">Nenhuma novilha apta.</p>');
             }
             if (mostrarBezerreiros) {
-                h += card('Aleitamento', 'fas fa-bottle-water text-pink-600', 'border-pink-600', alei.map(a => `<div class="p-3 flex justify-between items-center hover:bg-gray-50"><div><b class="text-lg brinco-link" onclick="irParaProntuario('${a.brinco}')">${a.brinco}</b><br><small class="text-gray-400 font-bold uppercase text-[9px]">Fim: ${new Date(a.fim).toLocaleDateString('pt-BR')}</small></div><div class="text-pink-600 font-black px-4 py-1 bg-pink-50 rounded-full text-xs">${a.dieta}</div></div>`).join('') || '<p class="p-4 text-center text-gray-400 text-xs italic">Sem animais no leite.</p>');
+                h += card('Aleitamento', 'fas fa-bottle-water text-pink-600', 'border-pink-600', alei.map(a => `<div class="p-3 flex justify-between items-center hover:bg-gray-50"><div><b class="text-lg brinco-link" onclick="irParaProntuario('${a.brinco}')">${a.brinco}</b><br><small class="text-gray-400 font-bold uppercase text-[9px]">${a.isDesmame ? 'Desmame em' : 'Nova Dieta em'}: ${new Date(a.proxFase).toLocaleDateString('pt-BR')}</small></div><div class="text-pink-600 font-black px-4 py-1 bg-pink-50 rounded-full text-xs">${a.dieta}</div></div>`).join('') || '<p class="p-4 text-center text-gray-400 text-xs italic">Sem animais no leite.</p>');
                 if (vB19.length > 0) h += card('Vacinas Brucelose (B19)', 'fas fa-syringe text-purple-600', 'border-purple-600', vB19.map(v => `<div class="p-3 flex justify-between items-center hover:bg-gray-50"><span class="font-bold text-lg brinco-link" onclick="irParaProntuario('${v.brinco}')">${v.brinco}</span><span class="text-xs font-black text-purple-700 bg-purple-50 px-2 py-1 rounded">LIMITE: ${new Date(v.limite).toLocaleDateString('pt-BR')}</span></div>`).join(''));
             }
             list.innerHTML = h;
