@@ -55,7 +55,7 @@
 
     <header class="bg-green-800 text-white p-4 shadow-lg sticky top-0 z-50">
         <div class="flex justify-between items-center max-w-md mx-auto">
-            <h1 class="font-black italic text-xl tracking-tighter uppercase">Vaquinhas <span class="text-green-400">v8</span></h1>
+            <h1 class="font-black italic text-xl tracking-tighter uppercase flex items-center gap-2">Vaquinhas <span class="text-green-400">v8</span> <i id="icone-conexao" class="fas fa-wifi text-green-400 text-xs"></i></h1>
             <div class="flex gap-2">
                 <button onclick="carregarDadosForcado()" class="bg-green-700 w-10 h-10 rounded-full flex items-center justify-center hover:rotate-180 transition-all duration-500 shadow-inner"><i class="fas fa-sync-alt"></i></button>
                 <button onclick="fazerLogout()" class="bg-red-700 w-10 h-10 rounded-full flex items-center justify-center hover:bg-red-600 transition-all shadow-inner"><i class="fas fa-sign-out-alt"></i></button>
@@ -327,6 +327,14 @@
     let mostrarPendencias = false; // Controle do botão da Inspetoria
 
 // --- ARRANQUE E LOGIN ---
+    // --- REGISTO DO SERVICE WORKER (MODO OFFLINE) ---
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js').catch(err => console.log('Erro no Service Worker', err));
+        });
+    }
+
+    // --- ARRANQUE E LOGIN ---
     document.addEventListener('DOMContentLoaded', () => {
         let hoje = new Date();
         document.getElementById('filtro-prod-mes').value = hoje.getMonth() + 1;
@@ -392,17 +400,16 @@
     async function carregarDadosForcado(senhaObj) {
         let senha = senhaObj || localStorage.getItem('vaquinhas_pwd') || "";
         document.getElementById('loading').classList.remove('hidden');
-        document.getElementById('txt-loading').innerText = "A Autenticar...";
+        document.getElementById('txt-loading').innerText = "A Sincronizar...";
+        
         try {
-            // Escudo protetor contra o erro do Google HTML/JSON
+            // Se o telemóvel detetar que está sem internet, força o erro para carregar offline logo de imediato
+            if (!navigator.onLine) throw new Error("offline");
+
             const fetchSeguro = async (url) => {
                 const res = await fetch(url, { redirect: "follow" });
                 const texto = await res.text();
-                try { 
-                    return JSON.parse(texto); 
-                } catch (e) { 
-                    throw new Error("O servidor do Google está a demorar a responder. Tente novamente em alguns segundos."); 
-                }
+                try { return JSON.parse(texto); } catch (e) { throw new Error("offline"); }
             };
 
             const [jsonAcoes, jsonProd] = await Promise.all([
@@ -413,15 +420,45 @@
             if (jsonAcoes.status === 'auth_error') { abrirTelaLogin(jsonAcoes.msg); return; }
             if (jsonAcoes.error || jsonAcoes.status === 'erro') throw new Error(jsonAcoes.msg || jsonAcoes.error);
 
+            // --- GUARDA A CÓPIA OFFLINE NO TELEMÓVEL ---
+            localStorage.setItem('vaquinhas_db_acoes', JSON.stringify(jsonAcoes));
+            if(!jsonProd.error && jsonProd.status !== 'erro') localStorage.setItem('vaquinhas_db_prod', JSON.stringify(jsonProd));
+
             cache = jsonAcoes;
-            if(!jsonProd.error && jsonProd.status !== 'erro') cacheProducao = jsonProd;
+            cacheProducao = jsonProd;
+            
+            // Indicador Verde (Online)
+            let icon = document.getElementById('icone-conexao');
+            icon.className = "fas fa-wifi text-green-400 text-xs";
 
             fecharTelaLogin();
             renderDashboard('todos'); setFiltroTipo('todos'); setHorizonte(60); atualizarCamposForm();
             if(document.getElementById('janela-producao').classList.contains('ativa')) renderGraficosProducao();
+
         } catch (e) {
-            alert("Aviso: " + e.message);
-            document.getElementById('btn-login').innerHTML = 'Entrar no Sistema';
+            // --- MODO DE RESGATE (OFFLINE) ---
+            let offlineAcoes = localStorage.getItem('vaquinhas_db_acoes');
+            let offlineProd = localStorage.getItem('vaquinhas_db_prod');
+
+            if (offlineAcoes) {
+                cache = JSON.parse(offlineAcoes);
+                if (offlineProd) cacheProducao = JSON.parse(offlineProd);
+
+                // Indicador Amarelo (Offline)
+                let icon = document.getElementById('icone-conexao');
+                icon.className = "fas fa-plane text-yellow-400 text-xs";
+                
+                // Só mostra o alerta de aviso offline uma vez
+                if (e.message === "offline") alert("Modo Offline Ativo. A consultar os dados da última sincronização.");
+                else alert("O servidor falhou (" + e.message + "). A carregar a última cópia guardada.");
+
+                fecharTelaLogin();
+                renderDashboard('todos'); setFiltroTipo('todos'); setHorizonte(60); atualizarCamposForm();
+                if(document.getElementById('janela-producao').classList.contains('ativa')) renderGraficosProducao();
+            } else {
+                alert("Está sem ligação e o telemóvel ainda não tem dados guardados. Conecte-se para o 1º acesso.");
+                document.getElementById('btn-login').innerHTML = 'Entrar no Sistema';
+            }
         } finally {
             document.getElementById('loading').classList.add('hidden');
         }
