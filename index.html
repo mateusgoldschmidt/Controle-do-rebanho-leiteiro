@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Vaquinhas v8 - Gestão do Rebanho</title>
+    <title>Vaquinhas - Gestão do Rebanho</title>
     
     <link rel="manifest" href='data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22Gest%C3%A3o%20Vaquinhas%22%2C%22short_name%22%3A%22Vaquinhas%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23f3f4f6%22%2C%22theme_color%22%3A%22%23166534%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22https%3A%2F%2Fcdn-icons-png.flaticon.com%2F512%2F1998%2F1998655.png%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fpng%22%7D%5D%7D'>
     <meta name="mobile-web-app-capable" content="yes">
@@ -201,7 +201,10 @@
             </div>
 
             <div class="bg-white p-6 rounded-2xl shadow-lg border-b-4 border-green-700">
-                <h2 class="font-black text-gray-800 mb-6 flex items-center uppercase tracking-tighter"><i class="fas fa-edit text-green-600 mr-2"></i>Manejo Diário</h2>
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="font-black text-gray-800 flex items-center uppercase tracking-tighter"><i class="fas fa-edit text-green-600 mr-2"></i>Manejo Diário</h2>
+                    <button type="button" onclick="abrirModalUltimosLancamentos()" class="bg-gray-100 hover:bg-gray-200 text-gray-600 p-2 px-3 rounded-lg text-[10px] font-black uppercase tracking-widest transition shadow-sm"><i class="fas fa-history mr-1"></i> Histórico</button>
+                </div>
                 <form id="formManejo" onsubmit="prepararSalvamento(event)" class="space-y-4">
                     <div class="grid grid-cols-2 gap-3">
                         <div>
@@ -301,7 +304,18 @@
     <div id="conteudo-genealogia" class="flex-1 overflow-auto bg-white rounded-3xl shadow-sm p-4 border border-gray-200">
     </div>
 </div>
-
+<!-- MODAL ÚLTIMOS LANÇAMENTOS -->
+<div id="modal-historico-manejos" class="hidden fixed inset-0 z-[600] bg-black/80 flex flex-col justify-end p-4 transition-opacity duration-300 opacity-0" onclick="if(event.target === this) fecharModalUltimosLancamentos()">
+    <div class="bg-white rounded-t-3xl shadow-2xl w-full max-w-md mx-auto h-[75vh] flex flex-col relative overflow-hidden">
+        <div class="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+            <h3 class="font-black text-gray-800 uppercase tracking-widest text-xs"><i class="fas fa-history text-blue-500 mr-2"></i>Últimos Lançamentos</h3>
+            <button onclick="fecharModalUltimosLancamentos()" class="text-gray-400 hover:text-gray-600 text-2xl font-black">&times;</button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-100" id="lista-historico-manejos">
+            <!-- A lista injetada via JS aparecerá aqui -->
+        </div>
+    </div>
+</div>
 <div id="modal-inspetoria" class="hidden fixed inset-0 z-[500] bg-black/80 flex flex-col justify-center items-center p-4">
     <div class="bg-white p-6 rounded-3xl shadow-2xl max-w-sm w-full text-center">
         <i class="fas fa-envelope-open-text text-5xl text-blue-600 mb-4 block"></i>
@@ -700,7 +714,81 @@
         } catch (err) { mostrarErroValidacao("Falha na gravação: " + err.message); document.getElementById('loading').classList.add('hidden'); } 
         finally { btn.disabled = false; btn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Registar Manejo'; }
     }
+    // --- FUNÇÕES DA LIXEIRA (ÚLTIMOS LANÇAMENTOS) ---
+    function abrirModalUltimosLancamentos() {
+        if (!cache || !cache.animais) return;
+        
+        let todosEventos = [];
+        for(let b in cache.animais) {
+            let animal = cache.animais[b];
+            if (animal.eventos) {
+                animal.eventos.forEach(ev => {
+                    todosEventos.push({ brinco: animal.brinco, tipo: ev.tipo, data: ev.data });
+                });
+            }
+        }
+        // Ordena do mais recente para o mais antigo e corta os últimos 25
+        todosEventos.sort((a,b) => b.data - a.data);
+        
+        let html = '';
+        todosEventos.slice(0, 25).forEach(ev => {
+            let dtStr = new Date(ev.data).toLocaleDateString('pt-BR');
+            let dtIso = new Date(ev.data).toISOString(); // Mandamos em ISO para evitar fusos horários
+            
+            html += `
+            <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-200 flex justify-between items-center">
+                <div>
+                    <div class="font-black text-sm text-gray-800">${ev.brinco}</div>
+                    <div class="text-[10px] text-gray-500 uppercase font-bold tracking-wider">${dtStr} &bull; <span class="text-blue-600">${ev.tipo}</span></div>
+                </div>
+                <button onclick="apagarEvento('${dtIso}', '${ev.brinco}', '${ev.tipo}')" class="w-10 h-10 rounded-full bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition flex items-center justify-center border border-red-100 shadow-inner">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            </div>`;
+        });
+        
+        document.getElementById('lista-historico-manejos').innerHTML = html || '<p class="text-center text-gray-500 text-xs italic p-4">Nenhum evento recente encontrado.</p>';
+        
+        const m = document.getElementById('modal-historico-manejos');
+        m.classList.remove('hidden');
+        setTimeout(() => m.classList.remove('opacity-0'), 10);
+    }
 
+    function fecharModalUltimosLancamentos() {
+        const m = document.getElementById('modal-historico-manejos');
+        m.classList.add('opacity-0');
+        setTimeout(() => m.classList.add('hidden'), 300);
+    }
+
+    async function apagarEvento(dataIso, brinco, evento) {
+        if(!confirm(`Tem a certeza absoluta que deseja APAGAR o evento "${evento.toUpperCase()}" do animal ${brinco}?\n\nEsta ação excluirá o registo permanentemente da base de dados.`)) return;
+        
+        if (!navigator.onLine) {
+            alert("A exclusão de eventos exige ligação à internet para não comprometer a fila local. Conecte-se e tente de novo.");
+            return;
+        }
+
+        fecharModalUltimosLancamentos();
+        document.getElementById('loading').classList.remove('hidden');
+        document.getElementById('txt-loading').innerText = "A Apagar...";
+        
+        try {
+            const payload = { acao: "apagar_evento", senha: localStorage.getItem('vaquinhas_pwd') || "", dataStr: dataIso, brinco: brinco, evento: evento };
+            const resRaw = await fetch(API_URL, { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) });
+            const resText = await resRaw.text();
+            let res = JSON.parse(resText);
+            
+            if(res.status === 'auth_error') { abrirTelaLogin(res.msg); return; }
+            if(res.status === 'sucesso') { 
+                alert(res.msg); 
+                cache = null; 
+                carregarDadosForcado(); 
+            } else throw new Error(res.msg);
+        } catch(err) { 
+            alert("Falha ao apagar: " + err.message); 
+            document.getElementById('loading').classList.add('hidden'); 
+        }
+    }
     // --- FUNÇÕES DE SINCRONIZAÇÃO EM SEGUNDO PLANO ---
     function atualizarBadgeFila() {
         let fila = JSON.parse(localStorage.getItem('vaquinhas_fila') || '[]');
