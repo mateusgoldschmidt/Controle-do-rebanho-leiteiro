@@ -98,14 +98,19 @@
                 </div>
             </div>
             
-            <div class="w-full flex gap-2 mt-4 mb-4">
-                <button onclick="toggleListaDetalhada()" class="flex-1 py-3 bg-gray-800 text-white font-black uppercase text-[10px] tracking-widest rounded-xl shadow-sm hover:bg-gray-700 transition"><i class="fas fa-list mr-2"></i>Ativos</button>
-                <button onclick="toggleListaDescartados()" class="flex-1 py-3 bg-red-50 text-red-700 border border-red-200 font-black uppercase text-[10px] tracking-widest rounded-xl shadow-sm hover:bg-red-100 transition"><i class="fas fa-times-circle mr-2"></i>Inativos</button>
-                <button onclick="gerarRelatorioImpressao()" class="flex-1 py-3 bg-blue-600 text-white font-black uppercase text-[10px] tracking-widest rounded-xl shadow-sm hover:bg-blue-700 transition"><i class="fas fa-print mr-2"></i>Relatório</button>
+            <div class="w-full grid grid-cols-2 gap-2 mt-4 mb-4">
+                <button onclick="toggleListaDetalhada()" class="py-3 bg-gray-800 text-white font-black uppercase text-[10px] tracking-widest rounded-xl shadow-sm hover:bg-gray-700 transition"><i class="fas fa-list mr-2"></i>Ativos</button>
+                <button onclick="toggleLoteDescarte()" class="py-3 bg-purple-50 text-purple-700 border border-purple-200 font-black uppercase text-[10px] tracking-widest rounded-xl shadow-sm hover:bg-purple-100 transition"><i class="fas fa-reply-all mr-2"></i>Descarte</button>
+                <button onclick="toggleListaDescartados()" class="py-3 bg-red-50 text-red-700 border border-red-200 font-black uppercase text-[10px] tracking-widest rounded-xl shadow-sm hover:bg-red-100 transition"><i class="fas fa-times-circle mr-2"></i>Inativos</button>
+                <button onclick="gerarRelatorioImpressao()" class="py-3 bg-blue-600 text-white font-black uppercase text-[10px] tracking-widest rounded-xl shadow-sm hover:bg-blue-700 transition"><i class="fas fa-print mr-2"></i>Relatório</button>
             </div>
             
             <div id="lista-detalhada-container" class="hidden mt-3 bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto w-full">
                 <div id="tabela-detalhada-body"></div>
+            </div>
+
+            <div id="lista-lote-descarte-container" class="hidden mt-3 bg-white rounded-xl shadow-sm border border-purple-200 overflow-x-auto w-full">
+                <div id="tabela-lote-descarte-body"></div>
             </div>
 
             <div id="lista-descartados-container" class="hidden mt-3 bg-white rounded-xl shadow-sm border border-red-200 overflow-x-auto w-full">
@@ -605,7 +610,6 @@
                 if (ev === "Inseminação" && animal.idadeDias < 365) return mostrarErroValidacao(`Inseminação Bloqueada: Esta bezerra possui apenas ${Math.floor(animal.idadeDias/30)} meses.`);
                 if (ev === "Parto") { if (animal.statusRep === "Vazia" && !animal.dtUltimaIA) return mostrarErroValidacao("Parto bloqueado: Não há registo prévio de Inseminação."); if (animal.dtUltimoParto && ((dEv.getTime() - animal.dtUltimoParto) / 86400000) < 260) return mostrarErroValidacao(`Intervalo biológico impossível. O último parto foi há menos de 260 dias.`); }
                 if (ev === "Secagem (Pré-Parto)") { if (animal.statusProd !== "Lactando") return mostrarErroValidacao("A vaca não está em lactação."); if (animal.statusRep !== "Prenhe" && animal.statusRep !== "Coberta") return mostrarErroValidacao("Secagem Pré-Parto exige fêmea prenhe ou coberta."); }
-                if (ev === "Encerramento Reprodutivo" && animal.statusRep !== "Coberta" && animal.statusRep !== "Prenhe") return mostrarErroValidacao("A fêmea não possui registo de cobertura ou prenhez para desistir da IA.");
                 if (ev === "Vacina B19" && animal.vacinaB19) return mostrarErroValidacao("Esta bezerra já possui a vacina B19 registada.");
                 if (ev === "Atualizar Foto" && !document.getElementById('input-foto').files[0]) return mostrarErroValidacao("Tem de escolher ou tirar uma foto primeiro.");
             }
@@ -975,8 +979,9 @@
     }
 
     // --- DASHBOARD INVENTÁRIO E RELATÓRIO ---
-    function toggleListaDetalhada() { document.getElementById('lista-detalhada-container').classList.toggle('hidden'); document.getElementById('lista-descartados-container').classList.add('hidden'); }
-    function toggleListaDescartados() { document.getElementById('lista-descartados-container').classList.toggle('hidden'); document.getElementById('lista-detalhada-container').classList.add('hidden'); }
+    function toggleListaDetalhada() { document.getElementById('lista-detalhada-container').classList.toggle('hidden'); document.getElementById('lista-descartados-container').classList.add('hidden'); document.getElementById('lista-lote-descarte-container').classList.add('hidden'); }
+    function toggleListaDescartados() { document.getElementById('lista-descartados-container').classList.toggle('hidden'); document.getElementById('lista-detalhada-container').classList.add('hidden'); document.getElementById('lista-lote-descarte-container').classList.add('hidden'); }
+    function toggleLoteDescarte() { document.getElementById('lista-lote-descarte-container').classList.toggle('hidden'); document.getElementById('lista-detalhada-container').classList.add('hidden'); document.getElementById('lista-descartados-container').classList.add('hidden'); }
 
     function atualizarListaDetalhada(dono) {
         let html = '<table class="w-full text-[10px] text-left whitespace-nowrap"><thead class="bg-gray-50 uppercase text-gray-400"><tr><th class="p-2 border-b">Brinco</th><th class="p-2 border-b">Idade ▼</th><th class="p-2 border-b">Sexo</th><th class="p-2 border-b">Cat.</th><th class="p-2 border-b">Reprod.</th><th class="p-2 border-b text-center">DEL</th></tr></thead><tbody class="divide-y divide-gray-100">';
@@ -1011,6 +1016,23 @@
             html += `<tr class="hover:bg-red-50"><td class="p-2 font-black brinco-link" onclick="irParaProntuario('${a.brinco}')">${a.brinco}</td><td class="p-2">${dSaida ? dSaida.toLocaleDateString('pt-BR') : '-'}</td><td class="p-2 font-bold uppercase">${evtSaida ? evtSaida.tipo : '-'}</td><td class="p-2">${a.sexo}</td><td class="p-2">${idSaida}</td></tr>`;
         });
         document.getElementById('tabela-descartados-body').innerHTML = html + '</tbody></table>';
+    }
+
+    function atualizarListaLoteDescarte(dono) {
+        let html = '<table class="w-full text-[10px] text-left whitespace-nowrap"><thead class="bg-purple-50 uppercase text-purple-600"><tr><th class="p-2 border-b">Brinco</th><th class="p-2 border-b">Idade</th><th class="p-2 border-b">Situação</th><th class="p-2 border-b text-center">DEL</th></tr></thead><tbody class="divide-y divide-purple-100">';
+        let desc = []; 
+        for(let b in cache.animais) { 
+            let a = cache.animais[b]; 
+            if(!a.descartada && a.encerrada && (dono === 'todos' || a.proprietario.toLowerCase() === dono.toLowerCase())) desc.push(a); 
+        }
+        desc.sort((a, b) => b.idadeDias - a.idadeDias);
+        desc.forEach(a => {
+            let del = (a.statusProd === 'Lactando' && a.dtUltimoParto) ? Math.max(0, Math.floor((new Date() - new Date(a.dtUltimoParto)) / 86400000)) : '-'; 
+            let sit = a.statusProd === 'Lactando' ? 'Aguardar Secagem' : 'Pronta p/ Venda';
+            html += `<tr class="hover:bg-purple-50"><td class="p-2 font-black brinco-link" onclick="irParaProntuario('${a.brinco}')">${a.brinco}</td><td class="p-2 text-gray-600">${getIdadeFormatada(a.idadeDias)}</td><td class="p-2 text-purple-600 font-bold">${sit}</td><td class="p-2 font-black text-center text-gray-800">${del}</td></tr>`;
+        });
+        if(desc.length === 0) html += `<tr><td colspan="4" class="p-4 text-center text-gray-400 italic">Nenhum animal no lote de descarte.</td></tr>`;
+        document.getElementById('tabela-lote-descarte-body').innerHTML = html + '</tbody></table>';
     }
 
     function gerarRelatorioImpressao() {
@@ -1077,7 +1099,10 @@
         const db = cache.dashboard; const p = (dono !== 'todos') ? db.proprietarios[dono] || { femeas: {}, machos: {} } : Object.values(db.proprietarios).reduce((a,c)=>{ for(let k in a.femeas){ a.femeas[k]+=c.femeas[k]||0; a.machos[k]+=c.machos[k]||0; } return a; }, {femeas:{ate_1:0,de_1_a_2:0,de_2_a_3:0,mais_de_3:0},machos:{ate_1:0,de_1_a_2:0,de_2_a_3:0,mais_de_3:0}});
         document.getElementById('lista-demografia').innerHTML = Object.entries({ ate_1: "Até 1 ano", de_1_a_2: "1 a 2 anos", de_2_a_3: "2 a 3 anos", mais_de_3: "Mais de 3 anos" }).map(([k,v]) => `<tr class="hover:bg-gray-50"><td class="p-3 font-medium text-xs text-gray-600">${v}</td><td class="p-3 text-center font-black text-green-700">${p.femeas[k]||0}</td><td class="p-3 text-center font-black text-blue-700">${p.machos[k]||0}</td></tr>`).join('');
         document.getElementById('val-lp').innerText = db.matriz.lactandoPrenhe || 0; document.getElementById('val-lv').innerText = db.matriz.lactandoVazia || 0; document.getElementById('val-sp').innerText = db.matriz.secaPrenhe || 0; document.getElementById('val-sv').innerText = db.matriz.secaVazia || 0; document.getElementById('val-del').innerText = (db.totalLactando > 0 ? Math.round(db.somaDEL / db.totalLactando) : 0) + " DEL Médio";
-        atualizarListaDetalhada(dono); atualizarListaDescartados(dono);
+        
+        atualizarListaDetalhada(dono); 
+        atualizarListaDescartados(dono); 
+        atualizarListaLoteDescarte(dono); // Alimenta a nova lista
     }
 
     // --- LISTA DE AÇÕES ---
