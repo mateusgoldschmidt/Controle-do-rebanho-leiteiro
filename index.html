@@ -324,6 +324,7 @@
     let modoProd = 'mes', viewFiltro = 'tudo'; 
     let variaveisSalvamentoTemporario = null;
     let donoAtual = 'todos';
+    let mostrarPendencias = false; // Controle do botão da Inspetoria
 
 // --- ARRANQUE E LOGIN ---
     document.addEventListener('DOMContentLoaded', () => {
@@ -393,9 +394,20 @@
         document.getElementById('loading').classList.remove('hidden');
         document.getElementById('txt-loading').innerText = "A Autenticar...";
         try {
+            // Escudo protetor contra o erro do Google HTML/JSON
+            const fetchSeguro = async (url) => {
+                const res = await fetch(url, { redirect: "follow" });
+                const texto = await res.text();
+                try { 
+                    return JSON.parse(texto); 
+                } catch (e) { 
+                    throw new Error("O servidor do Google está a demorar a responder. Tente novamente em alguns segundos."); 
+                }
+            };
+
             const [jsonAcoes, jsonProd] = await Promise.all([
-                fetch(API_URL + "?action=relatorioAcoes&senha=" + encodeURIComponent(senha), { redirect: "follow" }).then(r=>r.json()),
-                fetch(API_URL + "?action=relatorioProducao&senha=" + encodeURIComponent(senha), { redirect: "follow" }).then(r=>r.json())
+                fetchSeguro(API_URL + "?action=relatorioAcoes&senha=" + encodeURIComponent(senha)),
+                fetchSeguro(API_URL + "?action=relatorioProducao&senha=" + encodeURIComponent(senha))
             ]);
 
             if (jsonAcoes.status === 'auth_error') { abrirTelaLogin(jsonAcoes.msg); return; }
@@ -408,7 +420,7 @@
             renderDashboard('todos'); setFiltroTipo('todos'); setHorizonte(60); atualizarCamposForm();
             if(document.getElementById('janela-producao').classList.contains('ativa')) renderGraficosProducao();
         } catch (e) {
-            alert("Erro de comunicação com o servidor: " + e.message);
+            alert("Aviso: " + e.message);
             document.getElementById('btn-login').innerHTML = 'Entrar no Sistema';
         } finally {
             document.getElementById('loading').classList.add('hidden');
@@ -601,7 +613,11 @@
         }
 
         try {
-            const res = await fetch(API_URL, { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ senha: localStorage.getItem('vaquinhas_pwd') || "", eventos: eventosEnvio }) }).then(r=>r.json());
+            const resRaw = await fetch(API_URL, { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ senha: localStorage.getItem('vaquinhas_pwd') || "", eventos: eventosEnvio }) });
+            const resText = await resRaw.text();
+            let res;
+            try { res = JSON.parse(resText); } catch(e) { throw new Error("O Google não conseguiu processar. Tente de novo."); }
+
             if(res.status === 'auth_error') { abrirTelaLogin(res.msg); return; }
             if(res.status === 'sucesso') { alert(res.msg); document.getElementById('formManejo').reset(); document.getElementById('data').valueAsDate = new Date(); toggleCriaFields(); atualizarCamposForm(); document.getElementById('preview-foto-container').style.display = 'none'; cache = null; carregarDadosForcado(); } 
             else throw new Error(res.msg);
@@ -614,7 +630,11 @@
         document.getElementById('loading').classList.remove('hidden'); document.getElementById('txt-loading').innerText = "A Resolver Pendência...";
         try {
             const payload = { acao: "resolver_pendencia_inspetoria", senha: localStorage.getItem('vaquinhas_pwd') || "", linha: linhaDaPlanilha, brinco: brinco, evento: evento, info1: info1, dataStr: dataStr, tipo_resolucao: tipoResolucao, dono: donoDoAnimal };
-            const res = await fetch(API_URL, { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) }).then(r=>r.json());
+            const resRaw = await fetch(API_URL, { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) });
+            const resText = await resRaw.text();
+            let res;
+            try { res = JSON.parse(resText); } catch(e) { throw new Error("Servidor ocupado. Não foi possível resolver agora."); }
+
             if(res.status === 'auth_error') { abrirTelaLogin(res.msg); return; }
             if(res.status === 'sucesso') { cache = null; carregarDadosForcado(); } else throw new Error(res.msg);
         } catch(err) { alert("Falha ao resolver: " + err.message); document.getElementById('loading').classList.add('hidden'); }
@@ -929,6 +949,8 @@
     function filtrarPorHorizonte(lista, cd) { if (!filtroAcoes.horizonteDias || lista.length === 0) return lista; let minTime = Math.min(...lista.map(i => new Date(i[cd]).getTime()));
     let oldest = new Date(minTime); oldest.setHours(0,0,0,0); let limite = new Date(oldest); limite.setDate(limite.getDate() + filtroAcoes.horizonteDias);
     return lista.filter(i => { const d = new Date(i[cd]); return d <= limite; }); }
+    function togglePendencias() { mostrarPendencias = !mostrarPendencias; renderAcoes(); }
+
     function toggleBezerros() { mostrarBezerreiros = !mostrarBezerreiros; const btn = document.getElementById('btn-toggle-bezerros'); if (mostrarBezerreiros) { btn.classList.replace('bg-pink-50', 'bg-pink-600'); btn.classList.replace('text-pink-700', 'text-white');
     btn.innerHTML = '<i class="fas fa-eye-slash mr-2"></i>Ocultar Aleitamento e B19'; } else { btn.classList.replace('bg-pink-600', 'bg-pink-50'); btn.classList.replace('text-white', 'text-pink-700');
     btn.innerHTML = '<i class="fas fa-baby-carriage mr-2"></i>Exibir Aleitamento e B19'; } renderAcoes(); }
@@ -938,13 +960,20 @@
         
         let htmlPend = '';
         if (cache.pendenciasInspetoria && cache.pendenciasInspetoria.length > 0) {
-            htmlPend += `<div class="mb-6 bg-orange-50 rounded-2xl shadow-sm border-t-4 border-orange-500 overflow-hidden"><div class="bg-orange-100 px-4 py-3 border-b border-orange-200 flex items-center justify-between"><h4 class="font-black text-[10px] uppercase tracking-widest text-orange-800"><i class="fas fa-exclamation-triangle mr-2"></i>Avisos Pendentes (Inspetoria)</h4></div><div class="divide-y divide-orange-100">`;
-            cache.pendenciasInspetoria.forEach(p => {
-                let dataOcorrencia = new Date(p.data).toLocaleDateString('pt-BR');
-                let donoPendente = cache.animais[p.brinco] ? cache.animais[p.brinco].proprietario : "Mateus";
-                htmlPend += `<div class="p-3"><div class="flex justify-between items-center mb-2"><div><span class="font-black text-lg text-orange-900 brinco-link" onclick="irParaProntuario('${p.brinco}')">${p.brinco}</span> <span class="text-xs font-bold uppercase text-orange-600 bg-orange-100 px-2 py-0.5 rounded">${p.evento}</span></div><div class="text-[10px] font-black text-orange-500">${dataOcorrencia}</div></div><div class="flex gap-2 mt-2"><button onclick="resolverPendenciaInspetoria('${p.linha}','${p.brinco}','${p.evento}','${p.info1}','${dataOcorrencia}','enviar', '${donoPendente}')" class="flex-1 bg-orange-600 hover:bg-orange-700 text-white py-2 rounded font-black text-[9px] uppercase"><i class="fas fa-envelope mr-1"></i>Enviar Email</button><button onclick="resolverPendenciaInspetoria('${p.linha}','${p.brinco}','${p.evento}','${p.info1}','${dataOcorrencia}','ignorar', '${donoPendente}')" class="flex-1 bg-white hover:bg-gray-50 border border-orange-200 text-orange-800 py-2 rounded font-black text-[9px] uppercase"><i class="fas fa-check mr-1"></i>Só Concluir</button></div></div>`;
-            });
-            htmlPend += `</div></div>`;
+            let qtd = cache.pendenciasInspetoria.length;
+            let iconeSeta = mostrarPendencias ? 'fa-chevron-up' : 'fa-chevron-down';
+            
+            htmlPend += `<button onclick="togglePendencias()" class="w-full mb-4 bg-orange-100 hover:bg-orange-200 text-orange-800 border border-orange-300 font-black py-3 rounded-xl shadow-sm text-[10px] uppercase tracking-widest flex items-center justify-center transition-colors"><i class="fas fa-exclamation-triangle mr-2 text-orange-600"></i> ${qtd} Aviso(s) Pendente(s) da Inspetoria <i class="fas ${iconeSeta} ml-2"></i></button>`;
+            
+            if (mostrarPendencias) {
+                htmlPend += `<div class="mb-6 bg-orange-50 rounded-2xl shadow-sm border-t-4 border-orange-500 overflow-hidden"><div class="bg-orange-100 px-4 py-3 border-b border-orange-200 flex items-center justify-between"><h4 class="font-black text-[10px] uppercase tracking-widest text-orange-800"><i class="fas fa-envelope mr-2"></i>Ações Necessárias</h4></div><div class="divide-y divide-orange-100">`;
+                cache.pendenciasInspetoria.forEach(p => {
+                    let dataOcorrencia = new Date(p.data).toLocaleDateString('pt-BR');
+                    let donoPendente = cache.animais[p.brinco] ? cache.animais[p.brinco].proprietario : "Mateus";
+                    htmlPend += `<div class="p-3"><div class="flex justify-between items-center mb-2"><div><span class="font-black text-lg text-orange-900 brinco-link" onclick="irParaProntuario('${p.brinco}')">${p.brinco}</span> <span class="text-xs font-bold uppercase text-orange-600 bg-orange-100 px-2 py-0.5 rounded">${p.evento}</span></div><div class="text-[10px] font-black text-orange-500">${dataOcorrencia}</div></div><div class="flex gap-2 mt-2"><button onclick="resolverPendenciaInspetoria('${p.linha}','${p.brinco}','${p.evento}','${p.info1}','${dataOcorrencia}','enviar', '${donoPendente}')" class="flex-1 bg-orange-600 hover:bg-orange-700 text-white py-2 rounded font-black text-[9px] uppercase"><i class="fas fa-envelope mr-1"></i>Enviar Email</button><button onclick="resolverPendenciaInspetoria('${p.linha}','${p.brinco}','${p.evento}','${p.info1}','${dataOcorrencia}','ignorar', '${donoPendente}')" class="flex-1 bg-white hover:bg-gray-50 border border-orange-200 text-orange-800 py-2 rounded font-black text-[9px] uppercase"><i class="fas fa-check mr-1"></i>Só Concluir</button></div></div>`;
+                });
+                htmlPend += `</div></div>`;
+            }
         }
         document.getElementById('lista-pendencias-inspetoria').innerHTML = htmlPend;
 
