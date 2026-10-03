@@ -305,12 +305,16 @@
     </div>
 </div>
 
-<!-- MODAL ÚLTIMOS LANÇAMENTOS -->
+<!-- MODAL ÚLTIMOS LANÇAMENTOS E LIXEIRA -->
 <div id="modal-historico-manejos" class="hidden fixed inset-0 z-[600] bg-black/80 flex flex-col justify-end p-4 transition-opacity duration-300 opacity-0" onclick="if(event.target === this) fecharModalUltimosLancamentos()">
     <div class="bg-white rounded-t-3xl shadow-2xl w-full max-w-md mx-auto h-[75vh] flex flex-col relative overflow-hidden">
         <div class="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-            <h3 class="font-black text-gray-800 uppercase tracking-widest text-xs"><i class="fas fa-history text-blue-500 mr-2"></i>Últimos Lançamentos</h3>
+            <h3 class="font-black text-gray-800 uppercase tracking-widest text-xs"><i class="fas fa-history text-blue-500 mr-2"></i>Histórico & Lixeira</h3>
             <button onclick="fecharModalUltimosLancamentos()" class="text-gray-400 hover:text-gray-600 text-2xl font-black">&times;</button>
+        </div>
+        <div class="flex bg-gray-50 border-b border-gray-200">
+            <button id="tab-hist-ativos" onclick="setAbaHistorico('ativos')" class="flex-1 py-3 text-[10px] font-black uppercase tracking-widest border-b-2 border-blue-500 text-blue-600 transition-colors">Ativos</button>
+            <button id="tab-hist-lixeira" onclick="setAbaHistorico('lixeira')" class="flex-1 py-3 text-[10px] font-black uppercase tracking-widest border-b-2 border-transparent text-gray-400 hover:text-gray-600 transition-colors"><i class="fas fa-trash-restore mr-1"></i>Lixeira</button>
         </div>
         <div class="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-100" id="lista-historico-manejos">
             <!-- A lista injetada via JS aparecerá aqui -->
@@ -715,44 +719,81 @@
         finally { btn.disabled = false; btn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Registar Manejo'; }
     }
 
-    // --- FUNÇÕES DA LIXEIRA (ÚLTIMOS LANÇAMENTOS) ---
+    // --- FUNÇÕES DA LIXEIRA (ÚLTIMOS LANÇAMENTOS E SOFT DELETE) ---
+    let abaHistoricoAtual = 'ativos';
+
+    function setAbaHistorico(aba) {
+        abaHistoricoAtual = aba;
+        document.getElementById('tab-hist-ativos').className = aba === 'ativos' ? "flex-1 py-3 text-[10px] font-black uppercase tracking-widest border-b-2 border-blue-500 text-blue-600 transition-colors" : "flex-1 py-3 text-[10px] font-black uppercase tracking-widest border-b-2 border-transparent text-gray-400 hover:text-gray-600 transition-colors";
+        document.getElementById('tab-hist-lixeira').className = aba === 'lixeira' ? "flex-1 py-3 text-[10px] font-black uppercase tracking-widest border-b-2 border-red-500 text-red-600 transition-colors" : "flex-1 py-3 text-[10px] font-black uppercase tracking-widest border-b-2 border-transparent text-gray-400 hover:text-gray-600 transition-colors";
+        renderHistorico();
+    }
+
     function abrirModalUltimosLancamentos() {
-        if (!cache || !cache.animais) return;
-        
-        let todosEventos = [];
-        for(let b in cache.animais) {
-            let animal = cache.animais[b];
-            if (animal.eventos) {
-                animal.eventos.forEach(ev => {
-                    todosEventos.push({ brinco: animal.brinco, tipo: ev.tipo, data: ev.data });
-                });
-            }
-        }
-        // Ordena do mais recente para o mais antigo e corta os últimos 25
-        todosEventos.sort((a,b) => b.data - a.data);
-        
-        let html = '';
-        todosEventos.slice(0, 25).forEach(ev => {
-            let dtStr = new Date(ev.data).toLocaleDateString('pt-BR');
-            let dtIso = new Date(ev.data).toISOString(); // Mandamos em ISO para evitar fusos horários
-            
-            html += `
-            <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-200 flex justify-between items-center">
-                <div>
-                    <div class="font-black text-sm text-gray-800">${ev.brinco}</div>
-                    <div class="text-[10px] text-gray-500 uppercase font-bold tracking-wider">${dtStr} &bull; <span class="text-blue-600">${ev.tipo}</span></div>
-                </div>
-                <button onclick="apagarEvento('${dtIso}', '${ev.brinco}', '${ev.tipo}')" class="w-10 h-10 rounded-full bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition flex items-center justify-center border border-red-100 shadow-inner">
-                    <i class="fas fa-trash-alt"></i>
-                </button>
-            </div>`;
-        });
-        
-        document.getElementById('lista-historico-manejos').innerHTML = html || '<p class="text-center text-gray-500 text-xs italic p-4">Nenhum evento recente encontrado.</p>';
-        
+        setAbaHistorico('ativos');
         const m = document.getElementById('modal-historico-manejos');
         m.classList.remove('hidden');
         setTimeout(() => m.classList.remove('opacity-0'), 10);
+    }
+
+    function renderHistorico() {
+        if (!cache) return;
+        let html = '';
+        
+        if (abaHistoricoAtual === 'ativos') {
+            let todosEventos = [];
+            for(let b in cache.animais) {
+                let animal = cache.animais[b];
+                if (animal.eventos) {
+                    animal.eventos.forEach(ev => {
+                        todosEventos.push({ brinco: animal.brinco, tipo: ev.tipo, data: ev.data });
+                    });
+                }
+            }
+            todosEventos.sort((a,b) => b.data - a.data);
+            
+            todosEventos.slice(0, 25).forEach(ev => {
+                let dtStr = new Date(ev.data).toLocaleDateString('pt-BR');
+                let dtIso = new Date(ev.data).toISOString(); 
+                
+                html += `
+                <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-200 flex justify-between items-center">
+                    <div>
+                        <div class="font-black text-sm text-gray-800">${ev.brinco}</div>
+                        <div class="text-[10px] text-gray-500 uppercase font-bold tracking-wider">${dtStr} &bull; <span class="text-blue-600">${ev.tipo}</span></div>
+                    </div>
+                    <button onclick="apagarEvento('${dtIso}', '${ev.brinco}', '${ev.tipo}')" class="w-10 h-10 rounded-full bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition flex items-center justify-center border border-red-100 shadow-inner">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>`;
+            });
+            if (!html) html = '<p class="text-center text-gray-500 text-xs italic p-4">Nenhum evento recente encontrado.</p>';
+        } else {
+            // Aba Lixeira
+            let lixeira = cache.lixeira || [];
+            lixeira.sort((a,b) => b.excluidoEm - a.excluidoEm); // Os apagados mais recentemente ficam no topo
+            
+            lixeira.slice(0, 25).forEach(ev => {
+                let dtStr = new Date(ev.data).toLocaleDateString('pt-BR');
+                let dtDelStr = new Date(ev.excluidoEm).toLocaleDateString('pt-BR');
+                let dtIso = new Date(ev.data).toISOString();
+                
+                html += `
+                <div class="bg-gray-200 p-3 rounded-xl shadow-sm border border-gray-300 flex justify-between items-center opacity-80">
+                    <div>
+                        <div class="font-black text-sm text-gray-600 line-through">${ev.brinco}</div>
+                        <div class="text-[10px] text-gray-500 uppercase font-bold tracking-wider line-through">${dtStr} &bull; ${ev.tipo}</div>
+                        <div class="text-[8px] text-red-500 font-black uppercase mt-1"><i class="fas fa-times mr-1"></i>Apagado a ${dtDelStr}</div>
+                    </div>
+                    <button onclick="restaurarEvento('${dtIso}', '${ev.brinco}', '${ev.tipo}')" class="w-10 h-10 rounded-full bg-green-50 text-green-600 hover:bg-green-600 hover:text-white transition flex items-center justify-center border border-green-200 shadow-inner">
+                        <i class="fas fa-trash-restore"></i>
+                    </button>
+                </div>`;
+            });
+            if (!html) html = '<p class="text-center text-gray-500 text-xs italic p-4 mt-6"><i class="fas fa-box-open text-3xl block mb-2 opacity-50"></i>A Lixeira está vazia.</p>';
+        }
+        
+        document.getElementById('lista-historico-manejos').innerHTML = html;
     }
 
     function fecharModalUltimosLancamentos() {
@@ -762,16 +803,16 @@
     }
 
     async function apagarEvento(dataIso, brinco, evento) {
-        if(!confirm(`Tem a certeza absoluta que deseja APAGAR o evento "${evento.toUpperCase()}" do animal ${brinco}?\n\nEsta ação excluirá o registo permanentemente da base de dados.`)) return;
+        if(!confirm(`Tem a certeza que deseja APAGAR o evento "${evento.toUpperCase()}" do animal ${brinco}?\n\nEle será movido para a lixeira durante 90 dias.`)) return;
         
         if (!navigator.onLine) {
-            alert("A exclusão de eventos exige ligação à internet para não comprometer a fila local. Conecte-se e tente de novo.");
+            alert("Esta ação exige ligação à internet. Conecte-se e tente de novo.");
             return;
         }
 
         fecharModalUltimosLancamentos();
         document.getElementById('loading').classList.remove('hidden');
-        document.getElementById('txt-loading').innerText = "A Apagar...";
+        document.getElementById('txt-loading').innerText = "A Enviar para a Lixeira...";
         
         try {
             const payload = { acao: "apagar_evento", senha: localStorage.getItem('vaquinhas_pwd') || "", dataStr: dataIso, brinco: brinco, evento: evento };
@@ -787,6 +828,36 @@
             } else throw new Error(res.msg);
         } catch(err) { 
             alert("Falha ao apagar: " + err.message); 
+            document.getElementById('loading').classList.add('hidden'); 
+        }
+    }
+
+    async function restaurarEvento(dataIso, brinco, evento) {
+        if(!confirm(`Deseja RESTAURAR o evento "${evento.toUpperCase()}" do animal ${brinco}?\n\nEle voltará a fazer parte do histórico e das estatísticas do rebanho.`)) return;
+        
+        if (!navigator.onLine) {
+            alert("Esta ação exige ligação à internet. Conecte-se e tente de novo.");
+            return;
+        }
+
+        fecharModalUltimosLancamentos();
+        document.getElementById('loading').classList.remove('hidden');
+        document.getElementById('txt-loading').innerText = "A Restaurar...";
+        
+        try {
+            const payload = { acao: "restaurar_evento", senha: localStorage.getItem('vaquinhas_pwd') || "", dataStr: dataIso, brinco: brinco, evento: evento };
+            const resRaw = await fetch(API_URL, { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) });
+            const resText = await resRaw.text();
+            let res = JSON.parse(resText);
+            
+            if(res.status === 'auth_error') { abrirTelaLogin(res.msg); return; }
+            if(res.status === 'sucesso') { 
+                alert(res.msg); 
+                cache = null; 
+                carregarDadosForcado(); 
+            } else throw new Error(res.msg);
+        } catch(err) { 
+            alert("Falha ao restaurar: " + err.message); 
             document.getElementById('loading').classList.add('hidden'); 
         }
     }
