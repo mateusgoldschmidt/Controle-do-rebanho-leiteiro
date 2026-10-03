@@ -335,6 +335,22 @@
     </div>
 </div>
 
+<!-- TOAST NOTIFICATION -->
+<div id="toast-container" class="fixed top-4 left-1/2 transform -translate-x-1/2 z-[1000] flex flex-col gap-2 w-11/12 max-w-sm pointer-events-none"></div>
+
+<!-- MODAL DE CONFIRMAÇÃO PERSONALIZADO -->
+<div id="modal-confirmacao" class="hidden fixed inset-0 z-[700] bg-black/80 flex flex-col justify-center items-center p-4 transition-opacity duration-300 opacity-0">
+    <div class="bg-white p-6 rounded-3xl shadow-2xl max-w-sm w-full text-center transform transition-all scale-95" id="modal-confirmacao-box">
+        <i id="confirm-icon" class="fas fa-exclamation-circle text-5xl text-yellow-500 mb-4 block"></i>
+        <h2 id="confirm-title" class="font-black text-xl text-gray-800 mb-2 uppercase tracking-tighter">Atenção</h2>
+        <p id="confirm-message" class="text-sm text-gray-600 mb-6 font-medium whitespace-pre-line"></p>
+        <div class="flex gap-3">
+            <button id="btn-confirm-cancel" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-600 font-black py-3 rounded-xl uppercase tracking-widest text-xs transition">Cancelar</button>
+            <button id="btn-confirm-ok" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-black py-3 rounded-xl shadow-lg uppercase tracking-widest text-xs transition">Confirmar</button>
+        </div>
+    </div>
+</div>
+
 <script>
     // --- CREDENCIAIS E APIS ---
     const API_URL = "https://script.google.com/macros/s/AKfycbxxyvefDRTk6H_LsQj4udhXcpC_VSk-0jRl46GJIwgJP2GHBh6cVZLFrlkCDpI-YZ4Q/exec";
@@ -349,7 +365,71 @@
     let modoProd = 'mes', viewFiltro = 'tudo'; 
     let variaveisSalvamentoTemporario = null;
     let donoAtual = 'todos';
-    let mostrarPendencias = false; // Controle do botão da Inspetoria
+    let mostrarPendencias = false; 
+
+    // --- SISTEMA DE NOTIFICAÇÕES (TOAST & MODAL) ---
+    function mostrarToast(mensagem, tipo = 'sucesso') {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        
+        let corBg = tipo === 'erro' ? 'bg-red-500' : (tipo === 'aviso' ? 'bg-yellow-500' : 'bg-green-600');
+        let icone = tipo === 'erro' ? 'fa-times-circle' : (tipo === 'aviso' ? 'fa-exclamation-triangle' : 'fa-check-circle');
+
+        toast.className = `${corBg} text-white px-4 py-3 rounded-xl shadow-lg flex items-center gap-3 transform transition-all duration-300 -translate-y-[150%] opacity-0`;
+        toast.innerHTML = `<i class="fas ${icone} text-lg"></i><span class="text-sm font-bold tracking-wide">${mensagem}</span>`;
+        
+        container.appendChild(toast);
+
+        setTimeout(() => { toast.classList.remove('-translate-y-[150%]', 'opacity-0'); }, 10);
+
+        setTimeout(() => {
+            toast.classList.add('opacity-0', '-translate-y-[150%]');
+            setTimeout(() => toast.remove(), 300);
+        }, 3500);
+    }
+
+    function mostrarConfirmacao(titulo, mensagem, corTema, textoBotaoOk, callback) {
+        const modal = document.getElementById('modal-confirmacao');
+        const box = document.getElementById('modal-confirmacao-box');
+        
+        document.getElementById('confirm-title').innerText = titulo;
+        document.getElementById('confirm-message').innerText = mensagem;
+        
+        const btnOk = document.getElementById('btn-confirm-ok');
+        btnOk.innerText = textoBotaoOk;
+        
+        const icon = document.getElementById('confirm-icon');
+        if (corTema === 'red') {
+            icon.className = "fas fa-trash-alt text-5xl text-red-500 mb-4 block";
+            btnOk.className = "flex-1 bg-red-600 hover:bg-red-700 text-white font-black py-3 rounded-xl shadow-lg uppercase tracking-widest text-xs transition";
+        } else if (corTema === 'green') {
+            icon.className = "fas fa-trash-restore text-5xl text-green-500 mb-4 block";
+            btnOk.className = "flex-1 bg-green-600 hover:bg-green-700 text-white font-black py-3 rounded-xl shadow-lg uppercase tracking-widest text-xs transition";
+        } else {
+            icon.className = "fas fa-exclamation-circle text-5xl text-blue-500 mb-4 block";
+            btnOk.className = "flex-1 bg-blue-600 hover:bg-blue-700 text-white font-black py-3 rounded-xl shadow-lg uppercase tracking-widest text-xs transition";
+        }
+
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+            modal.classList.remove('opacity-0');
+            box.classList.remove('scale-95');
+        }, 10);
+
+        const fecharModal = () => {
+            modal.classList.add('opacity-0');
+            box.classList.add('scale-95');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+            document.getElementById('btn-confirm-cancel').onclick = null;
+            btnOk.onclick = null;
+        };
+
+        document.getElementById('btn-confirm-cancel').onclick = fecharModal;
+        btnOk.onclick = () => {
+            fecharModal();
+            callback(); 
+        };
+    }
 
     // --- SENSORES DE REDE PARA SINCRONIZAÇÃO ---
     window.addEventListener('online', () => { 
@@ -375,7 +455,7 @@
         document.getElementById('data').valueAsDate = hoje;
 
         window.history.replaceState({ janela: 'inventario' }, "", "#inventario");
-        atualizarBadgeFila(); // Verifica se há dados não enviados na fila
+        atualizarBadgeFila(); 
 
         const savedPwd = localStorage.getItem('vaquinhas_pwd');
         if (savedPwd) { fecharTelaLogin(); carregarDadosForcado(savedPwd); }
@@ -409,7 +489,7 @@
         const t = document.getElementById('tela-login'), a = document.getElementById('app-content');
         document.getElementById('input-senha').value = '';
         document.getElementById('btn-login').innerHTML = 'Entrar no Sistema';
-        if (msgErro) alert(msgErro);
+        if (msgErro) mostrarToast(msgErro, 'erro');
         a.classList.add('hidden', 'opacity-0');
         t.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
     }
@@ -453,14 +533,12 @@
             if (jsonAcoes.status === 'auth_error') { abrirTelaLogin(jsonAcoes.msg); return; }
             if (jsonAcoes.error || jsonAcoes.status === 'erro') throw new Error(jsonAcoes.msg || jsonAcoes.error);
 
-            // --- GUARDA A CÓPIA OFFLINE NO TELEMÓVEL ---
             localStorage.setItem('vaquinhas_db_acoes', JSON.stringify(jsonAcoes));
             if(!jsonProd.error && jsonProd.status !== 'erro') localStorage.setItem('vaquinhas_db_prod', JSON.stringify(jsonProd));
 
             cache = jsonAcoes;
             cacheProducao = jsonProd;
             
-            // Indicador Verde (Online)
             let icon = document.getElementById('icone-conexao');
             icon.className = "fas fa-wifi text-green-400 text-xs";
 
@@ -469,7 +547,6 @@
             if(document.getElementById('janela-producao').classList.contains('ativa')) renderGraficosProducao();
 
         } catch (e) {
-            // --- MODO DE RESGATE (OFFLINE) ---
             let offlineAcoes = localStorage.getItem('vaquinhas_db_acoes');
             let offlineProd = localStorage.getItem('vaquinhas_db_prod');
 
@@ -477,19 +554,17 @@
                 cache = JSON.parse(offlineAcoes);
                 if (offlineProd) cacheProducao = JSON.parse(offlineProd);
 
-                // Indicador Amarelo (Offline)
                 let icon = document.getElementById('icone-conexao');
                 icon.className = "fas fa-plane text-yellow-400 text-xs";
                 
-                // Só mostra o alerta de aviso offline uma vez
-                if (e.message === "offline") alert("Modo Offline Ativo. A consultar os dados da última sincronização.");
-                else alert("O servidor falhou (" + e.message + "). A carregar a última cópia guardada.");
+                if (e.message === "offline") mostrarToast("Modo Offline: Lendo última cópia.", 'aviso');
+                else mostrarToast("Servidor falhou. Lendo cópia local.", 'erro');
 
                 fecharTelaLogin();
                 renderDashboard('todos'); setFiltroTipo('todos'); setHorizonte(60); atualizarCamposForm();
                 if(document.getElementById('janela-producao').classList.contains('ativa')) renderGraficosProducao();
             } else {
-                alert("Está sem ligação e o telemóvel ainda não tem dados guardados. Conecte-se para o 1º acesso.");
+                mostrarToast("Sem internet para o 1º acesso.", 'erro');
                 document.getElementById('btn-login').innerHTML = 'Entrar no Sistema';
             }
         } finally {
@@ -659,7 +734,6 @@
         let isOffline = !navigator.onLine;
         let fotoBase64 = null;
 
-        // --- TRATAMENTO DA FOTO ---
         if (ev === "Atualizar Foto") {
             if (isOffline) {
                 info1 = document.getElementById('preview-foto').src; 
@@ -689,21 +763,19 @@
             eventosEnvio.push({ brinco: mainBrinco, data: mainDataStr, evento: ev, info1: info1, info2: info2, info3: info3, statusInspetoria: statusInspetoria, dono: donoDoManejo }); 
         }
 
-        // --- MODO OFFLINE (SALVAR NA FILA LOCAL) ---
         if (isOffline) {
             let fila = JSON.parse(localStorage.getItem('vaquinhas_fila') || '[]');
             fila.push({ eventos: eventosEnvio, fotoBase64: fotoBase64, isFoto: (ev === "Atualizar Foto") });
             localStorage.setItem('vaquinhas_fila', JSON.stringify(fila));
             
             atualizarBadgeFila();
-            alert("Sem internet! O manejo foi guardado na memória do telemóvel e será sincronizado automaticamente assim que recuperar a ligação.");
+            mostrarToast("Manejo salvo na Fila Offline!", 'aviso');
             
             document.getElementById('formManejo').reset(); document.getElementById('data').valueAsDate = new Date(); toggleCriaFields(); atualizarCamposForm(); document.getElementById('preview-foto-container').style.display = 'none';
             btn.disabled = false; btn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Registar Manejo';
             return;
         }
 
-        // --- MODO ONLINE (ENVIO NORMAL) ---
         document.getElementById('loading').classList.remove('hidden');
         document.getElementById('txt-loading').innerText = "A Gravar no Diário...";
         try {
@@ -713,7 +785,7 @@
             try { res = JSON.parse(resText); } catch(e) { throw new Error("O Google não conseguiu processar. Tente de novo."); }
 
             if(res.status === 'auth_error') { abrirTelaLogin(res.msg); return; }
-            if(res.status === 'sucesso') { alert(res.msg); document.getElementById('formManejo').reset(); document.getElementById('data').valueAsDate = new Date(); toggleCriaFields(); atualizarCamposForm(); document.getElementById('preview-foto-container').style.display = 'none'; cache = null; carregarDadosForcado(); } 
+            if(res.status === 'sucesso') { mostrarToast(res.msg, 'sucesso'); document.getElementById('formManejo').reset(); document.getElementById('data').valueAsDate = new Date(); toggleCriaFields(); atualizarCamposForm(); document.getElementById('preview-foto-container').style.display = 'none'; cache = null; carregarDadosForcado(); } 
             else throw new Error(res.msg);
         } catch (err) { mostrarErroValidacao("Falha na gravação: " + err.message); document.getElementById('loading').classList.add('hidden'); } 
         finally { btn.disabled = false; btn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Registar Manejo'; }
@@ -769,9 +841,8 @@
             });
             if (!html) html = '<p class="text-center text-gray-500 text-xs italic p-4">Nenhum evento recente encontrado.</p>';
         } else {
-            // Aba Lixeira
             let lixeira = cache.lixeira || [];
-            lixeira.sort((a,b) => b.excluidoEm - a.excluidoEm); // Os apagados mais recentemente ficam no topo
+            lixeira.sort((a,b) => b.excluidoEm - a.excluidoEm); 
             
             lixeira.slice(0, 25).forEach(ev => {
                 let dtStr = new Date(ev.data).toLocaleDateString('pt-BR');
@@ -802,64 +873,68 @@
         setTimeout(() => m.classList.add('hidden'), 300);
     }
 
-    async function apagarEvento(dataIso, brinco, evento) {
-        if(!confirm(`Tem a certeza que deseja APAGAR o evento "${evento.toUpperCase()}" do animal ${brinco}?\n\nEle será movido para a lixeira durante 90 dias.`)) return;
-        
+    function apagarEvento(dataIso, brinco, evento) {
         if (!navigator.onLine) {
-            alert("Esta ação exige ligação à internet. Conecte-se e tente de novo.");
+            mostrarToast("A exclusão exige internet.", 'erro');
             return;
         }
 
-        fecharModalUltimosLancamentos();
-        document.getElementById('loading').classList.remove('hidden');
-        document.getElementById('txt-loading').innerText = "A Enviar para a Lixeira...";
-        
-        try {
-            const payload = { acao: "apagar_evento", senha: localStorage.getItem('vaquinhas_pwd') || "", dataStr: dataIso, brinco: brinco, evento: evento };
-            const resRaw = await fetch(API_URL, { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) });
-            const resText = await resRaw.text();
-            let res = JSON.parse(resText);
-            
-            if(res.status === 'auth_error') { abrirTelaLogin(res.msg); return; }
-            if(res.status === 'sucesso') { 
-                alert(res.msg); 
-                cache = null; 
-                carregarDadosForcado(); 
-            } else throw new Error(res.msg);
-        } catch(err) { 
-            alert("Falha ao apagar: " + err.message); 
-            document.getElementById('loading').classList.add('hidden'); 
-        }
+        mostrarConfirmacao(
+            "Apagar Evento",
+            `Tem a certeza que deseja apagar o evento "${evento.toUpperCase()}" do animal ${brinco}?\n\nEle ficará na lixeira por 90 dias.`,
+            "red",
+            "Sim, Apagar",
+            async () => {
+                fecharModalUltimosLancamentos();
+                document.getElementById('loading').classList.remove('hidden');
+                document.getElementById('txt-loading').innerText = "A Apagar...";
+                
+                try {
+                    const payload = { acao: "apagar_evento", senha: localStorage.getItem('vaquinhas_pwd') || "", dataStr: dataIso, brinco: brinco, evento: evento };
+                    const resRaw = await fetch(API_URL, { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) });
+                    const resText = await resRaw.text();
+                    let res = JSON.parse(resText);
+                    
+                    if(res.status === 'auth_error') { abrirTelaLogin(res.msg); return; }
+                    if(res.status === 'sucesso') { 
+                        mostrarToast(res.msg, 'sucesso'); 
+                        cache = null; carregarDadosForcado(); 
+                    } else throw new Error(res.msg);
+                } catch(err) { mostrarToast("Falha: " + err.message, 'erro'); document.getElementById('loading').classList.add('hidden'); }
+            }
+        );
     }
 
-    async function restaurarEvento(dataIso, brinco, evento) {
-        if(!confirm(`Deseja RESTAURAR o evento "${evento.toUpperCase()}" do animal ${brinco}?\n\nEle voltará a fazer parte do histórico e das estatísticas do rebanho.`)) return;
-        
+    function restaurarEvento(dataIso, brinco, evento) {
         if (!navigator.onLine) {
-            alert("Esta ação exige ligação à internet. Conecte-se e tente de novo.");
+            mostrarToast("A restauração exige internet.", 'erro');
             return;
         }
 
-        fecharModalUltimosLancamentos();
-        document.getElementById('loading').classList.remove('hidden');
-        document.getElementById('txt-loading').innerText = "A Restaurar...";
-        
-        try {
-            const payload = { acao: "restaurar_evento", senha: localStorage.getItem('vaquinhas_pwd') || "", dataStr: dataIso, brinco: brinco, evento: evento };
-            const resRaw = await fetch(API_URL, { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) });
-            const resText = await resRaw.text();
-            let res = JSON.parse(resText);
-            
-            if(res.status === 'auth_error') { abrirTelaLogin(res.msg); return; }
-            if(res.status === 'sucesso') { 
-                alert(res.msg); 
-                cache = null; 
-                carregarDadosForcado(); 
-            } else throw new Error(res.msg);
-        } catch(err) { 
-            alert("Falha ao restaurar: " + err.message); 
-            document.getElementById('loading').classList.add('hidden'); 
-        }
+        mostrarConfirmacao(
+            "Restaurar Evento",
+            `Deseja restaurar o evento "${evento.toUpperCase()}" do animal ${brinco}?\n\nEle voltará às estatísticas do rebanho.`,
+            "green",
+            "Restaurar",
+            async () => {
+                fecharModalUltimosLancamentos();
+                document.getElementById('loading').classList.remove('hidden');
+                document.getElementById('txt-loading').innerText = "A Restaurar...";
+                
+                try {
+                    const payload = { acao: "restaurar_evento", senha: localStorage.getItem('vaquinhas_pwd') || "", dataStr: dataIso, brinco: brinco, evento: evento };
+                    const resRaw = await fetch(API_URL, { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) });
+                    const resText = await resRaw.text();
+                    let res = JSON.parse(resText);
+                    
+                    if(res.status === 'auth_error') { abrirTelaLogin(res.msg); return; }
+                    if(res.status === 'sucesso') { 
+                        mostrarToast(res.msg, 'sucesso'); 
+                        cache = null; carregarDadosForcado(); 
+                    } else throw new Error(res.msg);
+                } catch(err) { mostrarToast("Falha: " + err.message, 'erro'); document.getElementById('loading').classList.add('hidden'); }
+            }
+        );
     }
 
     // --- FUNÇÕES DE SINCRONIZAÇÃO EM SEGUNDO PLANO ---
@@ -918,11 +993,11 @@
         document.getElementById('loading').classList.add('hidden');
         
         if (sucessoCount > 0) {
-            alert(`${sucessoCount} registo(s) offline sincronizado(s) com o servidor!`);
+            mostrarToast(`${sucessoCount} registos sincronizados!`, 'sucesso');
             cache = null; 
             carregarDadosForcado(); 
         } else if (filaRestante.length > 0) {
-            alert("Alguns itens falharam na sincronização. O sistema tentará de novo mais tarde.");
+            mostrarToast("Alguns itens falharam. Mantidos na fila.", 'erro');
         }
     }
 
@@ -938,7 +1013,7 @@
 
             if(res.status === 'auth_error') { abrirTelaLogin(res.msg); return; }
             if(res.status === 'sucesso') { cache = null; carregarDadosForcado(); } else throw new Error(res.msg);
-        } catch(err) { alert("Falha ao resolver: " + err.message); document.getElementById('loading').classList.add('hidden'); }
+        } catch(err) { mostrarToast("Falha ao resolver: " + err.message, 'erro'); document.getElementById('loading').classList.add('hidden'); }
     }
 
     // --- CÁLCULO DE CATEGORIAS RICAS E FAIXAS ETÁRIAS (JS) ---
@@ -1508,12 +1583,12 @@
                 document.getElementById('txt-loading').innerText = "A Atualizar Gráficos...";
                 cacheProducao = null; // Força o download dos dados novos
                 await carregarDadosForcado(senhaStorage);
-                alert(res.msg);
+                mostrarToast(res.msg, 'sucesso');
             } else {
                 throw new Error(res.msg);
             }
         } catch (err) {
-            alert("Falha na sincronização: " + err.message);
+            mostrarToast("Falha na sincronização: " + err.message, 'erro');
             document.getElementById('loading').classList.add('hidden');
         }
     }
