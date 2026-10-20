@@ -1546,10 +1546,15 @@
             });
 
             for (let i = 0; i < dCoop.length; i++) {
-                if (dCoop[i] === 0 && dLact[i] > 0) {
+                // Só considera que o leite ficou acumulado no resfriador para o dia seguinte se dCoop[i] === 0 E não houve descarte total no dia (dDesc[i] === 0)
+                if (dCoop[i] === 0 && dDesc[i] === 0 && dLact[i] > 0) {
                     let nextIdx = -1;
-                    for (let j = i + 1; j < dCoop.length; j++) { if (dCoop[j] > 0) { nextIdx = j; break; } }
-                    if (nextIdx !== -1) {
+                    let abortGap = false;
+                    for (let j = i + 1; j < dCoop.length; j++) { 
+                        if (dCoop[j] > 0) { nextIdx = j; break; } 
+                        if (dDesc[j] > 0) { abortGap = true; break; }
+                    }
+                    if (nextIdx !== -1 && !abortGap) {
                         let gapLength = nextIdx - i + 1; let distributedVol = dCoop[nextIdx] / gapLength;
                         for (let k = i; k <= nextIdx; k++) dCoop[k] = distributedVol;
                         i = nextIdx;
